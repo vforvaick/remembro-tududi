@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  tududi:
+    image: ghcr.io/tududi/tududi:latest
+    container_name: tududi-api
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://tududi:tududi@postgres:5432/tududi
+      - JWT_SECRET=your_jwt_secret_here
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: tududi-postgres
+    environment:
+      - POSTGRES_USER=tududi
+      - POSTGRES_PASSWORD=tududi
+      - POSTGRES_DB=tududi
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
