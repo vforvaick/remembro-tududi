@@ -30,6 +30,9 @@ class ClaudeClient {
       logger.info('Sending message to Claude API');
       const response = await this.anthropic.messages.create(messageParams);
 
+      if (!response.content || response.content.length === 0 || !response.content[0].text) {
+        throw new Error('Invalid response structure from Claude API');
+      }
       const responseText = response.content[0].text;
       logger.info('Received response from Claude API');
 
@@ -50,10 +53,10 @@ class ClaudeClient {
 
       // Extract JSON from response (handle markdown code blocks)
       let jsonText = response.trim();
-      if (jsonText.startsWith('```json')) {
-        jsonText = jsonText.slice(7, -3).trim();
-      } else if (jsonText.startsWith('```')) {
-        jsonText = jsonText.slice(3, -3).trim();
+      // Extract JSON from markdown code blocks
+      const jsonMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+      if (jsonMatch) {
+        jsonText = jsonMatch[1].trim();
       }
 
       return JSON.parse(jsonText);
