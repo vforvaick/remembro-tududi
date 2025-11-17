@@ -2,7 +2,7 @@ require('dotenv').config();
 
 function required(name) {
   const value = process.env[name];
-  if (!value) {
+  if (!value || value.trim() === '') {
     throw new Error(`${name} is required in environment variables`);
   }
   return value;
@@ -10,6 +10,15 @@ function required(name) {
 
 function optional(name, defaultValue) {
   return process.env[name] || defaultValue;
+}
+
+function parseInteger(name, value, defaultValue) {
+  const toparse = value || defaultValue;
+  const parsed = parseInt(toparse);
+  if (isNaN(parsed)) {
+    throw new Error(`${name} must be a valid number, got: ${toparse}`);
+  }
+  return parsed;
 }
 
 module.exports = {
@@ -33,8 +42,8 @@ module.exports = {
   },
   claude: {
     model: optional('CLAUDE_MODEL', 'claude-3-5-sonnet-20241022'),
-    maxTokens: parseInt(optional('CLAUDE_MAX_TOKENS', '4096')),
+    maxTokens: parseInteger('CLAUDE_MAX_TOKENS', process.env.CLAUDE_MAX_TOKENS, '4096'),
   },
   timezone: optional('TIMEZONE', 'Asia/Jakarta'),
-  port: parseInt(optional('PORT', '3001')),
+  port: parseInteger('PORT', process.env.PORT, '3001'),
 };
