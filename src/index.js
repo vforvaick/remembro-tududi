@@ -1,0 +1,164 @@
+const config = require('./config');
+const logger = require('./utils/logger');
+
+// Initialize clients and services
+const TelegramBot = require('./bot/telegram-bot');
+const VoiceTranscriber = require('./bot/voice-transcriber');
+const ClaudeClient = require('./llm/claude-client');
+const TaskParser = require('./llm/task-parser');
+const TududuClient = require('./tududi/client');
+const ObsidianFileManager = require('./obsidian/file-manager');
+const ObsidianSyncWatcher = require('./obsidian/sync-watcher');
+const MessageOrchestrator = require('./orchestrator');
+
+async function main() {
+  try {
+    logger.info('Starting AI-Powered ADHD Task Management System...');
+
+    // Initialize services
+    const bot = new TelegramBot({
+      token: config.telegram.botToken,
+      userId: config.telegram.userId
+    });
+
+    const transcriber = new VoiceTranscriber({
+      apiKey: config.openai.apiKey
+    });
+
+    const claude = new ClaudeClient({
+      apiKey: config.anthropic.apiKey,
+      model: config.claude.model,
+      maxTokens: config.claude.maxTokens
+    });
+
+    const taskParser = new TaskParser(claude);
+
+    const tududuClient = new TududuClient({
+      apiUrl: config.tududi.apiUrl,
+      apiToken: config.tududi.apiToken
+    });
+
+    const fileManager = new ObsidianFileManager({
+      vaultPath: config.obsidian.vaultPath,
+      dailyNotesPath: config.obsidian.dailyNotesPath
+    });
+
+    const orchestrator = new MessageOrchestrator({
+      taskParser,
+      tududuClient,
+      fileManager,
+      bot
+    });
+
+    // Set up Obsidian sync watcher
+    const syncWatcher = new ObsidianSyncWatcher({
+      vaultPath: config.obsidian.vaultPath
+    });
+
+    syncWatcher.onTaskChange(async (change) => {
+      try {
+        logger.info(`Syncing task ${change.taskId} completion to Tududi`);
+        await tududuClient.updateTask(change.taskId, {
+          completed: change.completed
+        });
+      } catch (error) {
+        logger.error(`Failed to sync task completion: ${error.message}`);
+      }
+    });
+
+    syncWatcher.start();
+
+    // Set up Telegram bot handlers
+    bot.onMessage(async (msg) => {
+      const message = msg.text;
+      logger.info(`Received message: ${message}`);
+      await orchestrator.handleMessage(message);
+    });
+
+    bot.onVoiceMessage(async (msg) => {
+      try {
+        logger.info('Received voice message');
+        await bot.sendMessage('🎤 Transcribing voice message...');
+
+        // Download and transcribe
+        const voiceFilePath = await bot.downloadVoice(msg.voice.file_id);
+        const transcription = await transcriber.transcribe(voiceFilePath);
+
+        logger.info(`Transcription: ${transcription}`);
+        await bot.sendMessage(`📝 Transcribed: "${transcription}"\n\nProcessing...`);
+
+        // Process transcribed message
+        await orchestrator.handleMessage(transcription);
+      } catch (error) {
+        logger.error(`Voice processing error: ${error.message}`);
+        await bot.sendMessage('❌ Failed to process voice message');
+      }
+    });
+
+    // Register commands
+    bot.onCommand('start', async () => {
+      await bot.sendMessage(
+        '👋 Welcome to your AI-powered task assistant!\n\n' +
+        'Send me tasks, ideas, or knowledge and I\'ll organize them for you.\n\n' +
+        '**Commands:**\n' +
+        '/help - Show help\n' +
+        '/chaos - Enable chaos mode\n' +
+        '/normal - Disable chaos mode\n' +
+        '/status - Show system status'
+      );
+    });
+
+    bot.onCommand('help', async () => {
+      await bot.sendMessage(
+        '**How to use:**\n\n' +
+        '• Just send a message with tasks or ideas\n' +
+        '• Use voice messages for faster capture\n' +
+        '• Tasks are automatically parsed and organized\n' +
+        '• Knowledge is saved to Obsidian\n\n' +
+        '**Examples:**\n' +
+        '• "beli susu anak besok"\n' +
+        '• "meeting with client next Monday 2pm"\n' +
+        '• "bitcoin dips before US open" (knowledge)\n\n' +
+        '**Special features:**\n' +
+        '• Natural language dates (besok, next week, etc.)\n' +
+        '• Multiple tasks in one message\n' +
+        '• Indonesian language support'
+      );
+    });
+
+    bot.onCommand('status', async () => {
+      const tasks = await tududuClient.getTasks({ completed: false });
+      await bot.sendMessage(
+        `**System Status** ✅\n\n` +
+        `📋 Active tasks: ${tasks.length}\n` +
+        `🧠 LLM: ${config.claude.model}\n` +
+        `💾 Obsidian: Connected\n` +
+        `📡 Tududi API: Connected`
+      );
+    });
+
+    logger.info('System started successfully! 🚀');
+    logger.info('Bot is now listening for messages...');
+
+  } catch (error) {
+    logger.error(`Startup failed: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+// Handle graceful shutdown
+process.on('SIGINT', () => {
+  logger.info('Shutting down gracefully...');
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  logger.info('Shutting down gracefully...');
+  process.exit(0);
+});
+
+// Start application
+main().catch(error => {
+  logger.error(`Unhandled error: ${error.message}`);
+  process.exit(1);
+});
