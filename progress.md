@@ -126,13 +126,13 @@
 ## Phase 5: Core Integration - Task Capture Flow
 
 ### Task 5.1: Create Message Orchestrator
-- [ ] Write failing test for orchestrator
-- [ ] Run test to verify it fails
-- [ ] Write orchestrator implementation
-- [ ] Run test to verify it passes
-- [ ] Commit orchestrator
-- [ ] Update progress.md
-- [ ] Commit progress update
+- [x] Write failing test for orchestrator
+- [x] Run test to verify it fails
+- [x] Write orchestrator implementation
+- [x] Run test to verify it passes
+- [x] Commit orchestrator
+- [x] Update progress.md
+- [x] Commit progress update
 
 ### Task 5.2: Create Main Application Entry Point
 - [ ] Write main application entry point
