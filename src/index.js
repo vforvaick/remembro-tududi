@@ -6,6 +6,7 @@ const TelegramBot = require('./bot/telegram-bot');
 const VoiceTranscriber = require('./bot/voice-transcriber');
 const ClaudeClient = require('./llm/claude-client');
 const TaskParser = require('./llm/task-parser');
+const DailyPlanner = require('./llm/daily-planner');
 const TududuClient = require('./tududi/client');
 const ObsidianFileManager = require('./obsidian/file-manager');
 const ObsidianSyncWatcher = require('./obsidian/sync-watcher');
@@ -42,6 +43,8 @@ async function main() {
       vaultPath: config.obsidian.vaultPath,
       dailyNotesPath: config.obsidian.dailyNotesPath
     });
+
+    const dailyPlanner = new DailyPlanner(claude, tududuClient);
 
     const orchestrator = new MessageOrchestrator({
       taskParser,
@@ -102,6 +105,7 @@ async function main() {
         'Send me tasks, ideas, or knowledge and I\'ll organize them for you.\n\n' +
         '**Commands:**\n' +
         '/help - Show help\n' +
+        '/plan - Generate daily plan\n' +
         '/chaos - Enable chaos mode\n' +
         '/normal - Disable chaos mode\n' +
         '/status - Show system status'
@@ -135,6 +139,23 @@ async function main() {
         `💾 Obsidian: Connected\n` +
         `📡 Tududi API: Connected`
       );
+    });
+
+    bot.onCommand('plan', async (msg) => {
+      try {
+        await bot.sendMessage('🤔 Generating your daily plan...');
+
+        // For now, assume 8 hours available (can be improved with calendar integration)
+        const plan = await dailyPlanner.generatePlan({
+          available_hours: 8,
+          description: '8 hours free time today'
+        });
+
+        const message = dailyPlanner.formatPlanMessage(plan);
+        await bot.sendMessage(message);
+      } catch (error) {
+        await bot.sendMessage(`❌ Failed to generate plan: ${error.message}`);
+      }
     });
 
     logger.info('System started successfully! 🚀');
