@@ -2,23 +2,76 @@
 
 Zero-friction task capture and AI-powered planning for ADHD users.
 
-## Setup
+## Features
 
-1. Copy `.env.example` to `.env` and fill in your API keys
-2. Install dependencies: `npm install`
-3. Start development: `npm run dev`
+✅ **Instant Capture** - Voice or text via Telegram, processed in <10 seconds
+✅ **AI Planning** - Daily plan generation with energy-aware scheduling
+✅ **Chaos Mode** - Simplified view for unpredictable days
+✅ **Knowledge Base** - Automatic Obsidian integration with semantic search
+✅ **Natural Language** - Indonesian + English, flexible date parsing
+✅ **Bidirectional Sync** - Obsidian ↔ Tududi real-time sync
+
+## Quick Start
+
+```bash
+# 1. Clone repository
+git clone <repo-url>
+cd remembro-tududi-claude
+
+# 2. Set up environment
+cp .env.example .env
+# Edit .env with your API keys
+
+# 3. Start Tududi
+docker-compose up -d
+
+# 4. Install dependencies
+npm install
+
+# 5. Run application
+npm start
+```
+
+See [Setup Guide](docs/SETUP.md) for detailed instructions.
+
+## Documentation
+
+- [Setup Guide](docs/SETUP.md) - Installation and configuration
+- [User Guide](docs/USER_GUIDE.md) - Usage instructions and tips
+- [Implementation Plan](docs/plans/2025-11-18-ai-powered-adhd-task-system.md) - Development roadmap
 
 ## Architecture
 
-- **Telegram Bot**: User interface layer
-- **LLM Middleware**: Claude AI for parsing and planning
-- **Tududi API**: Task storage engine
-- **Obsidian Sync**: Knowledge base integration
+```
+Telegram Bot → LLM Middleware (Claude) → Tududi API + Obsidian Vault
+```
+
+- **Telegram**: Primary interface (low friction)
+- **Claude**: Natural language parsing and planning
+- **Tududi**: Task storage and management
+- **Obsidian**: Knowledge base with bidirectional sync
+
+## Tech Stack
+
+- Node.js 18+
+- Telegram Bot API
+- Anthropic Claude 3.5 Sonnet
+- OpenAI Whisper (transcription)
+- Tududi (Docker)
+- Obsidian (markdown files)
 
 ## Development
 
-- `npm run dev` - Start with nodemon (auto-reload)
-- `npm test` - Run tests
-- `npm run lint` - Check code style
+```bash
+npm run dev      # Start with auto-reload
+npm test         # Run tests
+npm run test:watch  # Watch mode
+```
 
-See [Implementation Plan](docs/plans/2025-11-18-ai-powered-adhd-task-system.md) for details.
+## License
+
+MIT
+
+## Contributing
+
+This is a personal project built for specific ADHD needs. Feel free to fork and adapt for your own use!
