@@ -19,6 +19,7 @@
     "@anthropic-ai/sdk": "^0.69.0",
     "axios": "^1.13.2",
     "dotenv": "^17.2.3",
+    "form-data": "^4.0.5",
     "node-telegram-bot-api": "^0.66.0"
   },
   "devDependencies": {
