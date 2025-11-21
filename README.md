@@ -5,10 +5,15 @@ Zero-friction task capture and AI-powered planning for ADHD users.
 ## Features
 
 ✅ **Instant Capture** - Voice or text via Telegram, processed in <10 seconds
+
 ✅ **AI Planning** - Daily plan generation with energy-aware scheduling
+
 ✅ **Chaos Mode** - Simplified view for unpredictable days
+
 ✅ **Knowledge Base** - Automatic Obsidian integration with semantic search
+
 ✅ **Natural Language** - Indonesian + English, flexible date parsing
+
 ✅ **Bidirectional Sync** - Obsidian ↔ Tududi real-time sync
 
 ## Quick Start
