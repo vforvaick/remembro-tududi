@@ -15,7 +15,7 @@ Zero-friction task capture and AI-powered planning for ADHD users.
 
 ```bash
 # 1. Clone repository
-git clone <repo-url>
+git clone https://github.com/vforvaick/remembro-tududi.git
 cd remembro-tududi-claude
 
 # 2. Set up environment
