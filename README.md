@@ -8,6 +8,8 @@ Zero-friction task capture and AI-powered planning for ADHD users.
 
 ✅ **AI Planning** - Daily plan generation with energy-aware scheduling
 
+✅ **Multi-LLM Support** - Automatic fallback across Claude, Gemini, MegaLM, and OpenAI
+
 ✅ **Chaos Mode** - Simplified view for unpredictable days
 
 ✅ **Knowledge Base** - Automatic Obsidian integration with semantic search
@@ -42,17 +44,18 @@ See [Setup Guide](docs/SETUP.md) for detailed instructions.
 ## Documentation
 
 - [Setup Guide](docs/SETUP.md) - Installation and configuration
+- [LLM Providers](docs/LLM_PROVIDERS.md) - Multi-LLM configuration and fallback
 - [User Guide](docs/USER_GUIDE.md) - Usage instructions and tips
 - [Implementation Plan](docs/plans/2025-11-18-ai-powered-adhd-task-system.md) - Development roadmap
 
 ## Architecture
 
 ```
-Telegram Bot → LLM Middleware (Claude) → Tududi API + Obsidian Vault
+Telegram Bot → LLM Middleware (Multi-Provider Fallback) → Tududi API + Obsidian Vault
 ```
 
 - **Telegram**: Primary interface (low friction)
-- **Claude**: Natural language parsing and planning
+- **LLM**: Multi-provider support (Claude, Gemini, MegaLM, OpenAI) with automatic fallback
 - **Tududi**: Task storage and management
 - **Obsidian**: Knowledge base with bidirectional sync
 
@@ -60,7 +63,7 @@ Telegram Bot → LLM Middleware (Claude) → Tududi API + Obsidian Vault
 
 - Node.js 18+
 - Telegram Bot API
-- Anthropic Claude 3.5 Sonnet
+- **LLM Providers**: Claude 3.5, Gemini, MegaLM, GPT-4 (with automatic fallback)
 - OpenAI Whisper (transcription)
 - Tududi (Docker)
 - Obsidian (markdown files)

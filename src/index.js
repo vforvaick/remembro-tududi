@@ -4,7 +4,7 @@ const logger = require('./utils/logger');
 // Initialize clients and services
 const TelegramBot = require('./bot/telegram-bot');
 const VoiceTranscriber = require('./bot/voice-transcriber');
-const ClaudeClient = require('./llm/claude-client');
+const LLMClient = require('./llm/llm-client');
 const TaskParser = require('./llm/task-parser');
 const DailyPlanner = require('./llm/daily-planner');
 const TududuClient = require('./tududi/client');
@@ -26,13 +26,9 @@ async function main() {
       apiKey: config.openai.apiKey
     });
 
-    const claude = new ClaudeClient({
-      apiKey: config.anthropic.apiKey,
-      model: config.claude.model,
-      maxTokens: config.claude.maxTokens
-    });
+    const llmClient = new LLMClient(config);
 
-    const taskParser = new TaskParser(claude);
+    const taskParser = new TaskParser(llmClient);
 
     const tududuClient = new TududuClient({
       apiUrl: config.tududi.apiUrl,
@@ -44,7 +40,7 @@ async function main() {
       dailyNotesPath: config.obsidian.dailyNotesPath
     });
 
-    const dailyPlanner = new DailyPlanner(claude, tududuClient);
+    const dailyPlanner = new DailyPlanner(llmClient, tududuClient);
 
     const orchestrator = new MessageOrchestrator({
       taskParser,
@@ -132,10 +128,12 @@ async function main() {
 
     bot.onCommand('status', async () => {
       const tasks = await tududuClient.getTasks({ completed: false });
+      const providerNames = llmClient.getProviderNames();
       await bot.sendMessage(
         `**System Status** ✅\n\n` +
         `📋 Active tasks: ${tasks.length}\n` +
-        `🧠 LLM: ${config.claude.model}\n` +
+        `🧠 LLM Providers: ${providerNames.join(' → ')}\n` +
+        `🎯 Primary: ${llmClient.getPrimaryProvider()}\n` +
         `💾 Obsidian: Connected\n` +
         `📡 Tududi API: Connected`
       );
