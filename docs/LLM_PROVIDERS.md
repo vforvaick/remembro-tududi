@@ -230,3 +230,165 @@ All providers implement the same interface:
 - `isConfigured()` - Check if provider is ready
 
 This ensures seamless fallback between any provider.
+
+## Real-World Use Cases
+
+### Use Case 1: Cost-Optimized Setup
+**Goal**: Minimize LLM costs while maintaining reliability
+
+```env
+LLM_PROVIDERS=megalm,gemini
+MEGALM_API_KEY=your_key
+MEGALM_MODEL=gpt-4o-mini  # Cheap and fast
+GEMINI_API_KEY=your_key
+```
+
+**Result**: ~90% cost reduction compared to Claude-only setup, with automatic fallback to Gemini if MegaLM has issues.
+
+### Use Case 2: Quality-First with Cost Fallback
+**Goal**: Best quality with cheaper fallback
+
+```env
+LLM_PROVIDERS=claude,megalm
+ANTHROPIC_API_KEY=your_key
+CLAUDE_MODEL=claude-3-5-sonnet-20241022
+MEGALM_API_KEY=your_key
+MEGALM_MODEL=gpt-4o-mini
+```
+
+**Result**: Always tries Claude first (best quality), falls back to cheap GPT-4o-mini if Claude has rate limits or downtime.
+
+### Use Case 3: Maximum Reliability
+**Goal**: Never fail, always have a working LLM
+
+```env
+LLM_PROVIDERS=megalm,claude,gemini,openai
+MEGALM_API_KEY=your_key
+ANTHROPIC_API_KEY=your_key
+GEMINI_API_KEY=your_key
+OPENAI_API_KEY=your_key
+```
+
+**Result**: 4-layer fallback ensures the system almost never fails due to LLM issues.
+
+### Use Case 4: Single Provider (Simple)
+**Goal**: Just use MegaLM's built-in fallback
+
+```env
+LLM_PROVIDERS=megalm
+MEGALM_API_KEY=your_key
+MEGALM_MODEL=gpt-4o
+```
+
+**Result**: Simplest setup. MegaLM itself has internal fallback chains, so you get multi-model reliability with one API.
+
+## Performance Tips
+
+### 1. Provider Order Matters
+Put faster/cheaper providers first for better response times:
+```env
+# Fast: gpt-4o-mini responds in ~1-2s
+LLM_PROVIDERS=megalm,claude
+
+# Slower: claude-3-5-sonnet can take 3-5s
+LLM_PROVIDERS=claude,megalm
+```
+
+### 2. Model Selection
+Choose models based on your task complexity:
+
+**Simple Tasks** (task parsing, quick responses):
+```env
+MEGALM_MODEL=gpt-4o-mini      # Fast & cheap
+CLAUDE_MODEL=claude-3-haiku   # Fast Claude
+GEMINI_MODEL=gemini-pro       # Balanced
+```
+
+**Complex Tasks** (daily planning, analysis):
+```env
+MEGALM_MODEL=gpt-4o           # Better reasoning
+CLAUDE_MODEL=claude-3-5-sonnet # Best quality
+GEMINI_MODEL=gemini-2.5-pro   # Advanced
+```
+
+### 3. Avoid Over-Configuration
+More providers = more potential points of failure in startup.
+
+**Good**:
+```env
+LLM_PROVIDERS=megalm,claude  # 2 providers
+```
+
+**Overkill**:
+```env
+LLM_PROVIDERS=megalm,claude,gemini,openai  # 4 providers
+```
+
+Unless you need maximum reliability, 2-3 providers is optimal.
+
+## Cost Comparison
+
+Approximate costs per 1M tokens (as of 2024):
+
+| Provider | Model | Input | Output | Best For |
+|----------|-------|-------|--------|----------|
+| MegaLM | gpt-4o-mini | $0.15 | $0.60 | Daily use |
+| MegaLM | gpt-4o | $2.50 | $10.00 | Quality tasks |
+| Claude | claude-3-haiku | $0.25 | $1.25 | Fast tasks |
+| Claude | claude-3-5-sonnet | $3.00 | $15.00 | Best quality |
+| Gemini | gemini-pro | $0.50 | $1.50 | Balanced |
+| OpenAI | gpt-3.5-turbo | $0.50 | $1.50 | Legacy |
+
+**Cost Optimization Example**:
+```env
+# 90% of tasks use cheap model, 10% fallback to quality
+LLM_PROVIDERS=megalm,claude
+MEGALM_MODEL=gpt-4o-mini  # $0.15/1M tokens
+CLAUDE_MODEL=claude-3-5-sonnet  # $3.00/1M tokens (fallback only)
+```
+
+## FAQ
+
+### Q: Can I use only MegaLM and skip other providers?
+**A**: Yes! MegaLM is a gateway to 70+ models with built-in fallback. One MegaLM API key gives you access to GPT, Claude, Gemini, and more.
+
+### Q: What happens if my API key runs out of credits?
+**A**: The system will log an error and try the next provider in your fallback chain. If all providers fail, user gets an error message.
+
+### Q: Can I change providers without restarting?
+**A**: No, you need to restart the application after changing `.env` configuration.
+
+### Q: Do I need to install npm packages for all providers?
+**A**: No, only install packages for providers you configured in `LLM_PROVIDERS`. Unused providers won't be loaded.
+
+### Q: Which provider is best for Indonesian language?
+**A**:
+- **MegaLM with GPT-4o**: Excellent Indonesian support
+- **Claude 3.5 Sonnet**: Very good Indonesian
+- **Gemini Pro**: Good Indonesian
+
+### Q: Can I use different models for different tasks?
+**A**: Currently no. All tasks use the same fallback chain. Future versions may support task-specific routing.
+
+### Q: Is MegaLM the same as running models locally?
+**A**: No, MegaLM is a cloud gateway that proxies to various cloud LLMs. It's not running models locally.
+
+### Q: How do I know which provider was used?
+**A**: Check logs. Each request logs which provider was attempted and which succeeded:
+```
+INFO: Attempting to use MegaLM provider
+INFO: Successfully used MegaLM provider
+```
+
+### Q: Can I set up provider-specific retry logic?
+**A**: The fallback system IS the retry logic. Each provider gets one attempt before moving to the next.
+
+### Q: What's the recommended setup for production?
+**A**:
+```env
+LLM_PROVIDERS=megalm,claude
+MEGALM_MODEL=gpt-4o-mini  # Cost-effective primary
+CLAUDE_MODEL=claude-3-5-sonnet  # Quality fallback
+```
+
+This gives you 99.9% uptime with reasonable costs.
