@@ -64,9 +64,9 @@ module.exports = {
   },
   megalm: {
     apiKey: optionalKey('MEGALM_API_KEY'),
-    model: optional('MEGALM_MODEL', 'megalm-default'),
+    model: optional('MEGALM_MODEL', 'gpt-4o-mini'),
     maxTokens: parseInteger('MEGALM_MAX_TOKENS', process.env.MEGALM_MAX_TOKENS, '4096'),
-    baseURL: optional('MEGALM_BASE_URL', 'https://api.megalm.ai/v1'),
+    baseURL: optional('MEGALM_BASE_URL', 'https://ai.megallm.io/v1'),
   },
   openai: {
     apiKey: optionalKey('OPENAI_API_KEY') || required('OPENAI_API_KEY'), // Keep required for backward compatibility with Whisper

@@ -4,9 +4,9 @@ const logger = require('../../utils/logger');
 class MegaLMProvider extends BaseLLMProvider {
   constructor(config) {
     super('MegaLM', config);
-    this.model = config.model || 'megalm-default';
+    this.model = config.model || 'gpt-4o-mini'; // Default to cost-effective model
     this.maxTokens = config.maxTokens || 4096;
-    this.baseURL = config.baseURL || 'https://api.megalm.ai/v1'; // Default endpoint
+    this.baseURL = config.baseURL || 'https://ai.megallm.io/v1'; // Official MegaLM endpoint
 
     // Lazy load axios for HTTP requests
     if (this.isConfigured()) {

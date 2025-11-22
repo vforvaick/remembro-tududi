@@ -15,17 +15,24 @@ CLAUDE_MODEL=claude-3-5-sonnet-20241022
 CLAUDE_MAX_TOKENS=4096
 ```
 
-### 2. **MegaLM** (Indonesian LLM)
-- **Best for**: Indonesian language tasks, local LLM support
-- **Models**: megalm-default (or custom models)
-- **Setup**: Requires `MEGALM_API_KEY` and optionally `MEGALM_BASE_URL`
+### 2. **MegaLM** (Multi-Model Gateway)
+- **Best for**: Access to 70+ models via single API, automatic fallback chains, cost optimization
+- **Models**: gpt-5, gpt-4o, gpt-4o-mini, claude-3.7-sonnet, claude-opus-4, gemini-2.5-pro, llama-4, mistral, and more
+- **Features**: OpenAI-compatible API, smart fallback, automatic failover on errors/rate limits
+- **Setup**: Requires `MEGALM_API_KEY` from https://megallm.io
 
 ```env
 MEGALM_API_KEY=your_megalm_key
-MEGALM_MODEL=megalm-default
-MEGALM_BASE_URL=https://api.megalm.ai/v1
+MEGALM_MODEL=gpt-4o-mini
+MEGALM_BASE_URL=https://ai.megallm.io/v1
 MEGALM_MAX_TOKENS=4096
 ```
+
+**Available Models** (via MegaLM):
+- GPT: `gpt-5`, `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo`
+- Claude: `claude-3.7-sonnet`, `claude-opus-4-1-20250805`, `claude-3.5-sonnet`
+- Gemini: `gemini-2.5-pro`, `gemini-pro-ultra`
+- Others: `llama-4`, `mistral`, `command-r+`
 
 ### 3. **Gemini** (Google)
 - **Best for**: Multimodal tasks, Google ecosystem integration
