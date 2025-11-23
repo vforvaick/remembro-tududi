@@ -7,6 +7,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://tududi:tududi@postgres:5432/tududi
       - JWT_SECRET=your_jwt_secret_here
+      - DISABLE_TELEGRAM=true
     depends_on:
       - postgres
     restart: unless-stopped
