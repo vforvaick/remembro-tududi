@@ -16,7 +16,7 @@ class TududuClient {
 
   async createTask(taskData) {
     try {
-      logger.info(`Creating task: ${taskData.title}`);
+      logger.info(`Creating task: ${taskData.name}`);
       logger.info(`Task payload: ${JSON.stringify(taskData, null, 2)}`);
       const response = await this.axiosInstance.post('/api/task', taskData);
       logger.info(`Task created with ID: ${response.data.id}`);

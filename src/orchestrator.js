@@ -14,7 +14,11 @@ class MessageOrchestrator {
       logger.info('Processing message...');
 
       // Send initial status message
-      statusMessageId = await this.bot.sendStatusMessage('🤔 Let me think...');
+      try {
+        statusMessageId = await this.bot.sendStatusMessage('🤔 Let me think...');
+      } catch (statusErr) {
+        logger.warn(`Failed to send status message: ${statusErr.message}, continuing without it`);
+      }
 
       // Parse message with LLM
       const parsed = await this.taskParser.parse(message);
