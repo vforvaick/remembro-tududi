@@ -59,9 +59,14 @@ class MessageOrchestrator {
 
     for (const taskData of tasks) {
       try {
+        // Validate task title before creating
+        if (!taskData.title || taskData.title.trim().length === 0) {
+          throw new Error('Task title cannot be empty');
+        }
+
         // Create task in Tududi - map title to name
         const tududiBuildTask = {
-          name: taskData.title,
+          name: taskData.title.trim(),
           description: taskData.notes || '',
           due_date: taskData.due_date,
           priority: taskData.priority

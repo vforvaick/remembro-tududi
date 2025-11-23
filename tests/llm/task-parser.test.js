@@ -91,4 +91,49 @@ describe('TaskParser', () => {
 
     expect(result.tasks[0].title).toContain('istri');
   });
+
+  test('rejects tasks with empty titles', async () => {
+    mockClaudeClient.parseJSON.mockResolvedValue({
+      type: 'task',
+      tasks: [{
+        title: '',
+        due_date: '2025-11-18'
+      }]
+    });
+
+    await expect(parser.parse('empty task'))
+      .rejects.toThrow('Cannot create tasks with empty titles');
+  });
+
+  test('filters out empty titles and keeps valid ones', async () => {
+    mockClaudeClient.parseJSON.mockResolvedValue({
+      type: 'task',
+      tasks: [
+        { title: 'Valid Task', due_date: '2025-11-18' },
+        { title: '', due_date: '2025-11-19' },
+        { title: '   ', due_date: '2025-11-20' },
+        { title: 'Another Valid Task', due_date: '2025-11-21' }
+      ]
+    });
+
+    const result = await parser.parse('mixed tasks');
+
+    expect(result.tasks).toHaveLength(2);
+    expect(result.tasks[0].title).toBe('Valid Task');
+    expect(result.tasks[1].title).toBe('Another Valid Task');
+  });
+
+  test('trims whitespace from task titles', async () => {
+    mockClaudeClient.parseJSON.mockResolvedValue({
+      type: 'task',
+      tasks: [{
+        title: '  Beli susu anak  ',
+        due_date: '2025-11-18'
+      }]
+    });
+
+    const result = await parser.parse('beli susu anak');
+
+    expect(result.tasks[0].title).toBe('Beli susu anak');
+  });
 });

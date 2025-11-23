@@ -16,9 +16,20 @@ class TududuClient {
 
   async createTask(taskData) {
     try {
-      logger.info(`Creating task: ${taskData.name}`);
-      logger.info(`Task payload: ${JSON.stringify(taskData, null, 2)}`);
-      const response = await this.axiosInstance.post('/api/task', taskData);
+      // Validate required fields
+      if (!taskData.name || taskData.name.trim().length === 0) {
+        throw new Error('Task name is required and cannot be empty');
+      }
+
+      // Ensure task name is trimmed
+      const validatedTaskData = {
+        ...taskData,
+        name: taskData.name.trim()
+      };
+
+      logger.info(`Creating task: ${validatedTaskData.name}`);
+      logger.info(`Task payload: ${JSON.stringify(validatedTaskData, null, 2)}`);
+      const response = await this.axiosInstance.post('/api/task', validatedTaskData);
       logger.info(`Task created with ID: ${response.data.id}`);
       return response.data;
     } catch (error) {

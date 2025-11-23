@@ -26,20 +26,20 @@ describe('TududuClient', () => {
   test('creates a new task', async () => {
     const mockTask = {
       id: 1,
-      title: 'Test Task',
+      name: 'Test Task',
       due_date: '2025-11-20'
     };
 
     mockAxiosInstance.post.mockResolvedValue({ data: mockTask });
 
     const result = await client.createTask({
-      title: 'Test Task',
+      name: 'Test Task',
       due_date: '2025-11-20'
     });
 
     expect(result).toEqual(mockTask);
     expect(mockAxiosInstance.post).toHaveBeenCalledWith(
-      '/api/tasks',
+      '/api/task',
       expect.any(Object)
     );
   });
@@ -69,7 +69,40 @@ describe('TududuClient', () => {
   test('handles API errors gracefully', async () => {
     mockAxiosInstance.post.mockRejectedValue(new Error('Network error'));
 
-    await expect(client.createTask({ title: 'Test' }))
+    await expect(client.createTask({ name: 'Test' }))
       .rejects.toThrow('Network error');
+  });
+
+  test('rejects tasks with empty names', async () => {
+    await expect(client.createTask({ name: '' }))
+      .rejects.toThrow('Task name is required and cannot be empty');
+
+    await expect(client.createTask({ name: '   ' }))
+      .rejects.toThrow('Task name is required and cannot be empty');
+
+    await expect(client.createTask({}))
+      .rejects.toThrow('Task name is required and cannot be empty');
+  });
+
+  test('trims whitespace from task names', async () => {
+    const mockTask = {
+      id: 1,
+      name: 'Test Task',
+      due_date: '2025-11-20'
+    };
+
+    mockAxiosInstance.post.mockResolvedValue({ data: mockTask });
+
+    await client.createTask({
+      name: '  Test Task  ',
+      due_date: '2025-11-20'
+    });
+
+    expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+      '/api/task',
+      expect.objectContaining({
+        name: 'Test Task'
+      })
+    );
   });
 });
