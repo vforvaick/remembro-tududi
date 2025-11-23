@@ -46,6 +46,7 @@ See [Setup Guide](docs/SETUP.md) for detailed instructions.
 - [Setup Guide](docs/SETUP.md) - Installation and configuration
 - [LLM Providers](docs/LLM_PROVIDERS.md) - Multi-LLM configuration and fallback
 - [User Guide](docs/USER_GUIDE.md) - Usage instructions and tips
+- [Package Dependencies](PACKAGES.md) - Dependency notes and maintenance
 - [Implementation Plan](docs/plans/2025-11-18-ai-powered-adhd-task-system.md) - Development roadmap
 
 ## Architecture

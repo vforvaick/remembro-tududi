@@ -328,16 +328,18 @@ Unless you need maximum reliability, 2-3 providers is optimal.
 
 ## Cost Comparison
 
-Approximate costs per 1M tokens (as of 2024):
+**⚠️ Note**: Pricing changes frequently. Always verify current rates with each provider before making cost-based decisions.
 
-| Provider | Model | Input | Output | Best For |
-|----------|-------|-------|--------|----------|
-| MegaLM | gpt-4o-mini | $0.15 | $0.60 | Daily use |
-| MegaLM | gpt-4o | $2.50 | $10.00 | Quality tasks |
-| Claude | claude-3-haiku | $0.25 | $1.25 | Fast tasks |
-| Claude | claude-3-5-sonnet | $3.00 | $15.00 | Best quality |
-| Gemini | gemini-pro | $0.50 | $1.50 | Balanced |
-| OpenAI | gpt-3.5-turbo | $0.50 | $1.50 | Legacy |
+Approximate costs per 1M tokens (for reference only):
+
+| Provider | Model | Input | Output | Best For | Verify Pricing At |
+|----------|-------|-------|--------|----------|-------------------|
+| MegaLM | gpt-4o-mini | ~$0.15 | ~$0.60 | Daily use | [megallm.io/pricing](https://megallm.io/pricing) |
+| MegaLM | gpt-4o | ~$2.50 | ~$10.00 | Quality tasks | [megallm.io/pricing](https://megallm.io/pricing) |
+| Claude | claude-3-haiku | ~$0.25 | ~$1.25 | Fast tasks | [anthropic.com/pricing](https://anthropic.com/pricing) |
+| Claude | claude-3-5-sonnet | ~$3.00 | ~$15.00 | Best quality | [anthropic.com/pricing](https://anthropic.com/pricing) |
+| Gemini | gemini-pro | ~$0.50 | ~$1.50 | Balanced | [ai.google.dev/pricing](https://ai.google.dev/pricing) |
+| OpenAI | gpt-3.5-turbo | ~$0.50 | ~$1.50 | Legacy | [openai.com/pricing](https://openai.com/pricing) |
 
 **Cost Optimization Example**:
 ```env

@@ -6,9 +6,10 @@ class OpenAIProvider extends BaseLLMProvider {
     super('OpenAI', config);
     this.model = config.model || 'gpt-4';
     this.maxTokens = config.maxTokens || 4096;
+    this.openai = null;
 
     // Lazy load OpenAI SDK (reuse existing package)
-    if (this.isConfigured()) {
+    if (config?.apiKey) {
       try {
         const OpenAI = require('openai');
         this.openai = new OpenAI({

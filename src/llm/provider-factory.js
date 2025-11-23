@@ -35,6 +35,20 @@ class ProviderFactory {
   }
 
   /**
+   * Normalize provider alias to config key
+   * @param {string} providerName - Provider name or alias
+   * @returns {string} - Config key for the provider
+   */
+  static normalizeProviderKey(providerName) {
+    const normalized = providerName.toLowerCase();
+    // Map aliases to actual config keys
+    const aliasMap = {
+      'gpt': 'openai'
+    };
+    return aliasMap[normalized] || normalized;
+  }
+
+  /**
    * Create multiple providers from configuration
    * @param {object} config - Full configuration object with providers list
    * @returns {Array<BaseLLMProvider>} - Array of configured providers
@@ -44,10 +58,12 @@ class ProviderFactory {
     const providerNames = config.llm?.providers || ['claude'];
 
     for (const providerName of providerNames) {
-      const providerConfig = config[providerName.toLowerCase()];
+      // Normalize provider name to get correct config key (e.g., 'gpt' -> 'openai')
+      const configKey = this.normalizeProviderKey(providerName);
+      const providerConfig = config[configKey];
 
       if (!providerConfig) {
-        logger.warn(`No configuration found for provider: ${providerName}`);
+        logger.warn(`No configuration found for provider: ${providerName} (config key: ${configKey})`);
         continue;
       }
 

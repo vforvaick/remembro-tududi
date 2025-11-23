@@ -6,16 +6,20 @@ class GeminiProvider extends BaseLLMProvider {
     super('Gemini', config);
     this.model = config.model || 'gemini-pro';
     this.maxTokens = config.maxTokens || 4096;
+    this.sdkAvailable = false;
 
     // Lazy load Google Generative AI SDK
-    if (this.isConfigured()) {
+    if (config?.apiKey) {
       try {
         const { GoogleGenerativeAI } = require('@google/generative-ai');
         this.genAI = new GoogleGenerativeAI(config.apiKey);
         this.modelInstance = this.genAI.getGenerativeModel({ model: this.model });
+        this.sdkAvailable = true;
       } catch (error) {
         logger.warn(`${this.name}: SDK not installed. Run: npm install @google/generative-ai`);
         this.genAI = null;
+        this.modelInstance = null;
+        this.sdkAvailable = false;
       }
     }
   }
@@ -51,7 +55,7 @@ class GeminiProvider extends BaseLLMProvider {
   }
 
   isConfigured() {
-    return !!this.config?.apiKey;
+    return !!this.config?.apiKey && this.sdkAvailable;
   }
 }
 
