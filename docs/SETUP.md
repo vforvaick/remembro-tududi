@@ -13,7 +13,7 @@
 
 You need **at least one** of these:
 - **Claude** (Anthropic) - Recommended for quality
-- **MegaLM** - Access to 70+ models via single API
+- **MegaLLM** - Access to 70+ models via single API
 - **Gemini** (Google) - Good for multimodal tasks
 - **OpenAI GPT** - General purpose (can reuse Whisper key)
 
@@ -36,7 +36,7 @@ See [LLM Providers Guide](LLM_PROVIDERS.md) for detailed comparison.
 2. Create an API key
 3. Copy the key (starts with `sk-ant-...`)
 
-**MegaLM - Multi-Model Gateway:**
+**MegaLLM - Multi-Model Gateway:**
 1. Sign up at https://megallm.io
 2. Get API key from dashboard
 3. Access 70+ models including GPT-5, Claude 4, Gemini Pro
@@ -99,10 +99,10 @@ OBSIDIAN_VAULT_PATH=/path/to/your/vault
 **With Fallback (Recommended):**
 ```env
 # Configure multiple providers for reliability
-LLM_PROVIDERS=megalm,claude,gemini
+LLM_PROVIDERS=megallm,claude,gemini
 
-# MegaLM (70+ models)
-MEGALM_API_KEY=your_megalm_key
+# MegaLLM (70+ models)
+MEGALM_API_KEY=your_megallm_key
 MEGALM_MODEL=gpt-4o-mini
 
 # Claude (fallback)
@@ -114,10 +114,10 @@ GEMINI_API_KEY=your_gemini_key
 # ... rest of configuration
 ```
 
-**Using MegaLM Only:**
+**Using MegaLLM Only:**
 ```env
-LLM_PROVIDERS=megalm
-MEGALM_API_KEY=your_megalm_key
+LLM_PROVIDERS=megallm
+MEGALM_API_KEY=your_megallm_key
 MEGALM_MODEL=gpt-4o  # or gpt-5, claude-3.7-sonnet, etc.
 ```
 
@@ -142,8 +142,8 @@ npm install openai
 ```
 
 **Note:**
-- Claude and MegaLM dependencies are already included
-- axios (for MegaLM) is already installed
+- Claude and MegaLLM dependencies are already included
+- axios (for MegaLLM) is already installed
 - These are optional and will only be loaded if configured
 
 ## Step 5: Start Application
@@ -208,8 +208,8 @@ Use the `/status` command in Telegram to verify everything is working:
 **System Status** ✅
 
 📋 Active tasks: 0
-🧠 LLM Providers: MegaLM → Claude
-🎯 Primary: MegaLM
+🧠 LLM Providers: MegaLLM → Claude
+🎯 Primary: MegaLLM
 💾 Obsidian: Connected
 📡 Tududi API: Connected
 ```

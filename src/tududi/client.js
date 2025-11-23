@@ -17,11 +17,14 @@ class TududuClient {
   async createTask(taskData) {
     try {
       logger.info(`Creating task: ${taskData.title}`);
-      const response = await this.axiosInstance.post('/api/tasks', taskData);
+      logger.info(`Task payload: ${JSON.stringify(taskData, null, 2)}`);
+      const response = await this.axiosInstance.post('/api/task', taskData);
       logger.info(`Task created with ID: ${response.data.id}`);
       return response.data;
     } catch (error) {
+      const errorDetails = error.response?.data || error.message;
       logger.error(`Failed to create task: ${error.message}`);
+      logger.error(`API Response: ${JSON.stringify(errorDetails, null, 2)}`);
       throw error;
     }
   }

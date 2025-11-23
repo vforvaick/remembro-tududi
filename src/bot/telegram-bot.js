@@ -86,6 +86,50 @@ class TelegramBot {
     }
   }
 
+  async sendStatusMessage(text) {
+    try {
+      const defaultOptions = {
+        parse_mode: 'Markdown',
+        disable_web_page_preview: true
+      };
+
+      const msg = await this.bot.sendMessage(
+        this.userId,
+        text,
+        defaultOptions
+      );
+
+      logger.info(`Status message sent with ID: ${msg.message_id}`);
+      return msg.message_id;
+    } catch (error) {
+      logger.error(`Failed to send status message: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async editStatusMessage(messageId, text) {
+    try {
+      const defaultOptions = {
+        parse_mode: 'Markdown',
+        disable_web_page_preview: true
+      };
+
+      await this.bot.editMessageText(
+        text,
+        {
+          chat_id: this.userId,
+          message_id: messageId,
+          ...defaultOptions
+        }
+      );
+
+      logger.info(`Status message ${messageId} updated`);
+    } catch (error) {
+      logger.error(`Failed to edit status message: ${error.message}`);
+      throw error;
+    }
+  }
+
   async downloadVoice(fileId) {
     try {
       const file = await this.bot.getFile(fileId);

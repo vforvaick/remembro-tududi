@@ -15,20 +15,20 @@ CLAUDE_MODEL=claude-3-5-sonnet-20241022
 CLAUDE_MAX_TOKENS=4096
 ```
 
-### 2. **MegaLM** (Multi-Model Gateway)
+### 2. **MegaLLM** (Multi-Model Gateway)
 - **Best for**: Access to 70+ models via single API, automatic fallback chains, cost optimization
 - **Models**: gpt-5, gpt-4o, gpt-4o-mini, claude-3.7-sonnet, claude-opus-4, gemini-2.5-pro, llama-4, mistral, and more
 - **Features**: OpenAI-compatible API, smart fallback, automatic failover on errors/rate limits
 - **Setup**: Requires `MEGALM_API_KEY` from https://megallm.io
 
 ```env
-MEGALM_API_KEY=your_megalm_key
+MEGALM_API_KEY=your_megallm_key
 MEGALM_MODEL=gpt-4o-mini
 MEGALM_BASE_URL=https://ai.megallm.io/v1
 MEGALM_MAX_TOKENS=4096
 ```
 
-**Available Models** (via MegaLM):
+**Available Models** (via MegaLLM):
 - GPT: `gpt-5`, `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo`
 - Claude: `claude-3.7-sonnet`, `claude-opus-4-1-20250805`, `claude-3.5-sonnet`
 - Gemini: `gemini-2.5-pro`, `gemini-pro-ultra`
@@ -61,8 +61,8 @@ OPENAI_MAX_TOKENS=4096
 Set the `LLM_PROVIDERS` environment variable with a comma-separated list of providers in your preferred fallback order:
 
 ```env
-# Try MegaLM first, then Gemini, then Claude, finally OpenAI
-LLM_PROVIDERS=megalm,gemini,claude,openai
+# Try MegaLLM first, then Gemini, then Claude, finally OpenAI
+LLM_PROVIDERS=megallm,gemini,claude,openai
 ```
 
 ### Common Configurations
@@ -79,7 +79,7 @@ LLM_PROVIDERS=claude,gpt-4,gemini
 
 **Local-First (Privacy):**
 ```env
-LLM_PROVIDERS=megalm,claude
+LLM_PROVIDERS=megallm,claude
 ```
 
 **Single Provider (No Fallback):**
@@ -98,7 +98,7 @@ LLM_PROVIDERS=claude
 ### Example Flow
 
 ```
-User sends message → System tries MegaLM → Fails (API timeout)
+User sends message → System tries MegaLLM → Fails (API timeout)
                    → System tries Gemini → Fails (Rate limit)
                    → System tries Claude → Success! ✓
 ```
@@ -114,7 +114,7 @@ npm install @anthropic-ai/sdk
 # Gemini (Google)
 npm install @google/generative-ai
 
-# MegaLM (uses axios for HTTP)
+# MegaLLM (uses axios for HTTP)
 npm install axios
 
 # OpenAI (for GPT models - already installed for Whisper)
@@ -131,8 +131,8 @@ Use the `/status` command in Telegram to see configured providers:
 **System Status** ✅
 
 📋 Active tasks: 12
-🧠 LLM Providers: MegaLM → Gemini → Claude
-🎯 Primary: MegaLM
+🧠 LLM Providers: MegaLLM → Gemini → Claude
+🎯 Primary: MegaLLM
 💾 Obsidian: Connected
 📡 Tududi API: Connected
 ```
@@ -150,7 +150,7 @@ Use the `/status` command in Telegram to see configured providers:
 
 ```
 Error: All LLM providers failed:
-- MegaLM: API key not configured
+- MegaLLM: API key not configured
 - Gemini: Package not installed
 - Claude: Invalid API key
 ```
@@ -162,7 +162,7 @@ Error: All LLM providers failed:
 
 ### Provider-Specific Issues
 
-**MegaLM**:
+**MegaLLM**:
 - Verify `MEGALM_BASE_URL` points to correct endpoint
 - Check if service supports OpenAI-compatible API format
 
@@ -219,7 +219,7 @@ LLMClient (Manages Fallback)
     ├── ProviderFactory (Creates Providers)
     │   ├── ClaudeProvider
     │   ├── GeminiProvider
-    │   ├── MegaLMProvider
+    │   ├── MegaLLMProvider
     │   └── OpenAIProvider
     └── BaseLLMProvider (Common Interface)
 ```
@@ -237,19 +237,19 @@ This ensures seamless fallback between any provider.
 **Goal**: Minimize LLM costs while maintaining reliability
 
 ```env
-LLM_PROVIDERS=megalm,gemini
+LLM_PROVIDERS=megallm,gemini
 MEGALM_API_KEY=your_key
 MEGALM_MODEL=gpt-4o-mini  # Cheap and fast
 GEMINI_API_KEY=your_key
 ```
 
-**Result**: ~90% cost reduction compared to Claude-only setup, with automatic fallback to Gemini if MegaLM has issues.
+**Result**: ~90% cost reduction compared to Claude-only setup, with automatic fallback to Gemini if MegaLLM has issues.
 
 ### Use Case 2: Quality-First with Cost Fallback
 **Goal**: Best quality with cheaper fallback
 
 ```env
-LLM_PROVIDERS=claude,megalm
+LLM_PROVIDERS=claude,megallm
 ANTHROPIC_API_KEY=your_key
 CLAUDE_MODEL=claude-3-5-sonnet-20241022
 MEGALM_API_KEY=your_key
@@ -262,7 +262,7 @@ MEGALM_MODEL=gpt-4o-mini
 **Goal**: Never fail, always have a working LLM
 
 ```env
-LLM_PROVIDERS=megalm,claude,gemini,openai
+LLM_PROVIDERS=megallm,claude,gemini,openai
 MEGALM_API_KEY=your_key
 ANTHROPIC_API_KEY=your_key
 GEMINI_API_KEY=your_key
@@ -272,15 +272,15 @@ OPENAI_API_KEY=your_key
 **Result**: 4-layer fallback ensures the system almost never fails due to LLM issues.
 
 ### Use Case 4: Single Provider (Simple)
-**Goal**: Just use MegaLM's built-in fallback
+**Goal**: Just use MegaLLM's built-in fallback
 
 ```env
-LLM_PROVIDERS=megalm
+LLM_PROVIDERS=megallm
 MEGALM_API_KEY=your_key
 MEGALM_MODEL=gpt-4o
 ```
 
-**Result**: Simplest setup. MegaLM itself has internal fallback chains, so you get multi-model reliability with one API.
+**Result**: Simplest setup. MegaLLM itself has internal fallback chains, so you get multi-model reliability with one API.
 
 ## Performance Tips
 
@@ -288,10 +288,10 @@ MEGALM_MODEL=gpt-4o
 Put faster/cheaper providers first for better response times:
 ```env
 # Fast: gpt-4o-mini responds in ~1-2s
-LLM_PROVIDERS=megalm,claude
+LLM_PROVIDERS=megallm,claude
 
 # Slower: claude-3-5-sonnet can take 3-5s
-LLM_PROVIDERS=claude,megalm
+LLM_PROVIDERS=claude,megallm
 ```
 
 ### 2. Model Selection
@@ -316,12 +316,12 @@ More providers = more potential points of failure in startup.
 
 **Good**:
 ```env
-LLM_PROVIDERS=megalm,claude  # 2 providers
+LLM_PROVIDERS=megallm,claude  # 2 providers
 ```
 
 **Overkill**:
 ```env
-LLM_PROVIDERS=megalm,claude,gemini,openai  # 4 providers
+LLM_PROVIDERS=megallm,claude,gemini,openai  # 4 providers
 ```
 
 Unless you need maximum reliability, 2-3 providers is optimal.
@@ -334,8 +334,8 @@ Approximate costs per 1M tokens (for reference only):
 
 | Provider | Model | Input | Output | Best For | Verify Pricing At |
 |----------|-------|-------|--------|----------|-------------------|
-| MegaLM | gpt-4o-mini | ~$0.15 | ~$0.60 | Daily use | [megallm.io/pricing](https://megallm.io/pricing) |
-| MegaLM | gpt-4o | ~$2.50 | ~$10.00 | Quality tasks | [megallm.io/pricing](https://megallm.io/pricing) |
+| MegaLLM | gpt-4o-mini | ~$0.15 | ~$0.60 | Daily use | [megallm.io/pricing](https://megallm.io/pricing) |
+| MegaLLM | gpt-4o | ~$2.50 | ~$10.00 | Quality tasks | [megallm.io/pricing](https://megallm.io/pricing) |
 | Claude | claude-3-haiku | ~$0.25 | ~$1.25 | Fast tasks | [anthropic.com/pricing](https://anthropic.com/pricing) |
 | Claude | claude-3-5-sonnet | ~$3.00 | ~$15.00 | Best quality | [anthropic.com/pricing](https://anthropic.com/pricing) |
 | Gemini | gemini-pro | ~$0.50 | ~$1.50 | Balanced | [ai.google.dev/pricing](https://ai.google.dev/pricing) |
@@ -344,15 +344,15 @@ Approximate costs per 1M tokens (for reference only):
 **Cost Optimization Example**:
 ```env
 # 90% of tasks use cheap model, 10% fallback to quality
-LLM_PROVIDERS=megalm,claude
+LLM_PROVIDERS=megallm,claude
 MEGALM_MODEL=gpt-4o-mini  # $0.15/1M tokens
 CLAUDE_MODEL=claude-3-5-sonnet  # $3.00/1M tokens (fallback only)
 ```
 
 ## FAQ
 
-### Q: Can I use only MegaLM and skip other providers?
-**A**: Yes! MegaLM is a gateway to 70+ models with built-in fallback. One MegaLM API key gives you access to GPT, Claude, Gemini, and more.
+### Q: Can I use only MegaLLM and skip other providers?
+**A**: Yes! MegaLLM is a gateway to 70+ models with built-in fallback. One MegaLLM API key gives you access to GPT, Claude, Gemini, and more.
 
 ### Q: What happens if my API key runs out of credits?
 **A**: The system will log an error and try the next provider in your fallback chain. If all providers fail, user gets an error message.
@@ -365,21 +365,21 @@ CLAUDE_MODEL=claude-3-5-sonnet  # $3.00/1M tokens (fallback only)
 
 ### Q: Which provider is best for Indonesian language?
 **A**:
-- **MegaLM with GPT-4o**: Excellent Indonesian support
+- **MegaLLM with GPT-4o**: Excellent Indonesian support
 - **Claude 3.5 Sonnet**: Very good Indonesian
 - **Gemini Pro**: Good Indonesian
 
 ### Q: Can I use different models for different tasks?
 **A**: Currently no. All tasks use the same fallback chain. Future versions may support task-specific routing.
 
-### Q: Is MegaLM the same as running models locally?
-**A**: No, MegaLM is a cloud gateway that proxies to various cloud LLMs. It's not running models locally.
+### Q: Is MegaLLM the same as running models locally?
+**A**: No, MegaLLM is a cloud gateway that proxies to various cloud LLMs. It's not running models locally.
 
 ### Q: How do I know which provider was used?
 **A**: Check logs. Each request logs which provider was attempted and which succeeded:
 ```
-INFO: Attempting to use MegaLM provider
-INFO: Successfully used MegaLM provider
+INFO: Attempting to use MegaLLM provider
+INFO: Successfully used MegaLLM provider
 ```
 
 ### Q: Can I set up provider-specific retry logic?
@@ -388,7 +388,7 @@ INFO: Successfully used MegaLM provider
 ### Q: What's the recommended setup for production?
 **A**:
 ```env
-LLM_PROVIDERS=megalm,claude
+LLM_PROVIDERS=megallm,claude
 MEGALM_MODEL=gpt-4o-mini  # Cost-effective primary
 CLAUDE_MODEL=claude-3-5-sonnet  # Quality fallback
 ```

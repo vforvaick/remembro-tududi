@@ -9,72 +9,121 @@ class MessageOrchestrator {
   }
 
   async handleMessage(message) {
+    let statusMessageId = null;
     try {
       logger.info('Processing message...');
 
+      // Send initial status message
+      statusMessageId = await this.bot.sendStatusMessage('🤔 Let me think...');
+
       // Parse message with LLM
       const parsed = await this.taskParser.parse(message);
+      logger.info(`Message parsed as type: ${parsed.type}`);
 
       if (parsed.type === 'task') {
-        await this.handleTaskMessage(parsed);
+        await this.handleTaskMessage(parsed, statusMessageId);
       } else if (parsed.type === 'knowledge') {
-        await this.handleKnowledgeMessage(parsed);
+        await this.handleKnowledgeMessage(parsed, statusMessageId);
       } else if (parsed.type === 'question') {
-        await this.handleQuestionMessage(parsed);
+        await this.handleQuestionMessage(parsed, statusMessageId);
       }
 
       logger.info('Message processed successfully');
     } catch (error) {
       logger.error(`Message processing failed: ${error.message}`);
-      await this.bot.sendMessage(
-        `❌ Sorry, I couldn't process that message.\n\nError: ${error.message}`
-      );
+      try {
+        if (statusMessageId) {
+          await this.bot.editStatusMessage(
+            statusMessageId,
+            `❌ Error: ${error.message}`
+          );
+        } else {
+          await this.bot.sendMessage(
+            `❌ Sorry, I couldn't process that message.\n\nError: ${error.message}`
+          );
+        }
+      } catch (editError) {
+        logger.error(`Failed to send error message: ${editError.message}`);
+      }
     }
   }
 
-  async handleTaskMessage(parsed) {
+  async handleTaskMessage(parsed, statusMessageId) {
     const tasks = parsed.tasks;
     const createdTasks = [];
+    const failedTasks = [];
 
     for (const taskData of tasks) {
       try {
-        // Create task in Tududi
-        const task = await this.tududuClient.createTask(taskData);
+        // Create task in Tududi - map title to name
+        const tududiBuildTask = {
+          name: taskData.title,
+          description: taskData.notes || '',
+          due_date: taskData.due_date,
+          priority: taskData.priority
+        };
+        const task = await this.tududuClient.createTask(tududiBuildTask);
         logger.info(`Task created: ${task.id}`);
 
         // Sync to Obsidian
-        await this.fileManager.appendTaskToDailyNote({
-          ...taskData,
-          id: task.id
-        });
+        try {
+          await this.fileManager.appendTaskToDailyNote({
+            title: taskData.title,
+            due_date: taskData.due_date,
+            time_estimate: taskData.time_estimate,
+            energy_level: taskData.energy_level,
+            project: taskData.project,
+            priority: taskData.priority,
+            notes: taskData.notes,
+            id: task.id
+          });
+        } catch (obsidianError) {
+          logger.warn(`Obsidian sync failed: ${obsidianError.message}`);
+        }
 
         createdTasks.push(task);
       } catch (error) {
-        logger.error(`Failed to create task: ${error.message}`);
+        logger.error(`Failed to create task "${taskData.title}": ${error.message}`);
+        failedTasks.push({ title: taskData.title, error: error.message });
       }
     }
 
     // Send confirmation
-    if (createdTasks.length === 1) {
-      const task = createdTasks[0];
-      await this.bot.sendMessage(
-        `✅ Task created: *${task.title}*\n\n` +
-        `📅 Due: ${task.due_date || 'Not set'}\n` +
-        `⏱️ Estimate: ${task.time_estimate || 30}m\n` +
-        `⚡ Energy: ${task.energy_level || 'MEDIUM'}\n` +
-        `📁 Project: ${task.project || 'Inbox'}`
-      );
-    } else if (createdTasks.length > 1) {
-      const taskList = createdTasks
-        .map(t => `• ${t.title}`)
-        .join('\n');
-      await this.bot.sendMessage(
-        `✅ Created ${createdTasks.length} tasks:\n\n${taskList}`
-      );
+    let response = '';
+    if (createdTasks.length > 0) {
+      if (createdTasks.length === 1) {
+        const task = createdTasks[0];
+        response = `✅ Task created: *${task.name}*\n\n` +
+          `📅 Due: ${task.due_date || 'Not set'}\n` +
+          `📝 Note: ${task.description || 'None'}`;
+      } else {
+        const taskList = createdTasks
+          .map(t => `• ${t.name}`)
+          .join('\n');
+        response = `✅ Created ${createdTasks.length} tasks:\n\n${taskList}`;
+      }
+
+      // Add failed tasks info if any
+      if (failedTasks.length > 0) {
+        response += `\n\n⚠️ Failed: ${failedTasks.map(t => t.title).join(', ')}`;
+      }
+    } else if (failedTasks.length > 0) {
+      response = `❌ Failed to create tasks:\n\n`;
+      failedTasks.forEach(task => {
+        response += `• ${task.title}: ${task.error}\n`;
+      });
+    } else {
+      response = `❌ No tasks to create`;
+    }
+
+    if (statusMessageId) {
+      await this.bot.editStatusMessage(statusMessageId, response);
+    } else {
+      await this.bot.sendMessage(response);
     }
   }
 
-  async handleKnowledgeMessage(parsed) {
+  async handleKnowledgeMessage(parsed, statusMessageId) {
     try {
       // Create knowledge note in Obsidian
       const notePath = await this.fileManager.createKnowledgeNote({
@@ -100,18 +149,26 @@ class MessageOrchestrator {
         response += `\n\n✅ Action task created: *${task.title}*`;
       }
 
-      await this.bot.sendMessage(response);
+      if (statusMessageId) {
+        await this.bot.editStatusMessage(statusMessageId, response);
+      } else {
+        await this.bot.sendMessage(response);
+      }
     } catch (error) {
       logger.error(`Failed to create knowledge: ${error.message}`);
       throw error;
     }
   }
 
-  async handleQuestionMessage(parsed) {
+  async handleQuestionMessage(parsed, statusMessageId) {
     // Placeholder for future semantic search
-    await this.bot.sendMessage(
-      '❓ Question mode coming soon! For now, you can search manually in Obsidian.'
-    );
+    const response = '❓ Question mode coming soon! For now, you can search manually in Obsidian.';
+
+    if (statusMessageId) {
+      await this.bot.editStatusMessage(statusMessageId, response);
+    } else {
+      await this.bot.sendMessage(response);
+    }
   }
 }
 

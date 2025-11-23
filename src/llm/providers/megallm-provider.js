@@ -1,12 +1,12 @@
 const BaseLLMProvider = require('./base-provider');
 const logger = require('../../utils/logger');
 
-class MegaLMProvider extends BaseLLMProvider {
+class MegaLLMProvider extends BaseLLMProvider {
   constructor(config) {
-    super('MegaLM', config);
+    super('MegaLLM', config);
     this.model = config.model || 'gpt-4o-mini'; // Default to cost-effective model
     this.maxTokens = config.maxTokens || 4096;
-    this.baseURL = config.baseURL || 'https://ai.megallm.io/v1'; // Official MegaLM endpoint
+    this.baseURL = config.baseURL || 'https://ai.megallm.io/v1'; // Official MegaLLM endpoint
 
     // Lazy load axios for HTTP requests
     if (this.isConfigured()) {
@@ -59,7 +59,7 @@ class MegaLMProvider extends BaseLLMProvider {
       );
 
       if (!response.data?.choices?.[0]?.message?.content) {
-        throw new Error('Invalid response structure from MegaLM API');
+        throw new Error('Invalid response structure from MegaLLM API');
       }
 
       const responseText = response.data.choices[0].message.content;
@@ -77,4 +77,4 @@ class MegaLMProvider extends BaseLLMProvider {
   }
 }
 
-module.exports = MegaLMProvider;
+module.exports = MegaLLMProvider;

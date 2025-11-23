@@ -62,11 +62,11 @@ module.exports = {
     model: optional('GEMINI_MODEL', 'gemini-pro'),
     maxTokens: parseInteger('GEMINI_MAX_TOKENS', process.env.GEMINI_MAX_TOKENS, '4096'),
   },
-  megalm: {
-    apiKey: optionalKey('MEGALM_API_KEY'),
-    model: optional('MEGALM_MODEL', 'gpt-4o-mini'),
-    maxTokens: parseInteger('MEGALM_MAX_TOKENS', process.env.MEGALM_MAX_TOKENS, '4096'),
-    baseURL: optional('MEGALM_BASE_URL', 'https://ai.megallm.io/v1'),
+  megallm: {
+    apiKey: optionalKey('MEGALLM_API_KEY'),
+    model: optional('MEGALLM_MODEL', 'gpt-4o-mini'),
+    maxTokens: parseInteger('MEGALLM_MAX_TOKENS', process.env.MEGALLM_MAX_TOKENS, '4096'),
+    baseURL: optional('MEGALLM_BASE_URL', 'https://ai.megallm.io/v1'),
   },
   openai: {
     apiKey: optionalKey('OPENAI_API_KEY') || required('OPENAI_API_KEY'), // Keep required for backward compatibility with Whisper

@@ -82,17 +82,17 @@ npm install openai
 
 ---
 
-### axios (MegaLM Provider & HTTP)
+### axios (MegaLLM Provider & HTTP)
 
 **Status**: ✅ **Actively maintained**
 
 **Current Version**: ^1.13.2
 
-**Purpose**: HTTP client for MegaLM API and other HTTP operations.
+**Purpose**: HTTP client for MegaLLM API and other HTTP operations.
 
 **Notes**:
 - Included in main dependencies
-- Used by MegaLM provider for OpenAI-compatible API calls
+- Used by MegaLLM provider for OpenAI-compatible API calls
 - General-purpose HTTP client for the application
 
 ---
