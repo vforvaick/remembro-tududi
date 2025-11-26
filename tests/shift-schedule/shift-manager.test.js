@@ -1,13 +1,25 @@
 const ShiftManager = require('../../src/shift-schedule/shift-manager');
+const fs = require('fs');
+const path = require('path');
 
 describe('ShiftManager', () => {
   let manager;
+  let testFilePath;
 
   beforeEach(() => {
+    // Use unique test file for each test to avoid state pollution
+    testFilePath = path.join('/tmp', `test-shifts-${Date.now()}-${Math.random()}.json`);
     manager = new ShiftManager({
-      shiftDataPath: '/tmp/test-shifts.json',
+      shiftDataPath: testFilePath,
       googleSheetId: 'test-sheet-id'
     });
+  });
+
+  afterEach(() => {
+    // Clean up test file
+    if (fs.existsSync(testFilePath)) {
+      fs.unlinkSync(testFilePath);
+    }
   });
 
   test('should initialize with empty shift data', async () => {
