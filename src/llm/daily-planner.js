@@ -5,6 +5,14 @@ class DailyPlanner {
   constructor(claudeClient, tududuClient) {
     this.claude = claudeClient;
     this.tududi = tududuClient;
+
+    // Shift timing definitions
+    this.shiftTimings = {
+      '1': { bedtime: '23:00', wakeTime: '07:00' },
+      '2': { bedtime: '02:00', wakeTime: '07:00' },
+      '2_special': { bedtime: '00:00', wakeTime: '07:00' },
+      '3': { bedtime: '08:00', wakeTime: '22:00' }
+    };
   }
 
   async generatePlan(schedule, options = {}) {
@@ -38,6 +46,100 @@ class DailyPlanner {
       logger.error(`Failed to generate plan: ${error.message}`);
       throw error;
     }
+  }
+
+  calculateAvailableTime(shift) {
+    // Get shift timing for this shift code
+    const timing = this.shiftTimings[shift.code];
+    if (!timing) {
+      return { start: '07:00', end: '23:00', totalMinutes: 960 };
+    }
+
+    // Calculate available time based on shift
+    if (shift.code === '1') {
+      // Morning shift: available from end of shift to bedtime
+      const shiftEnd = this._timeToMinutes(shift.timeEnd); // 16:00
+      const bedtime = this._timeToMinutes(timing.bedtime); // 23:00
+      return {
+        start: shift.timeEnd,
+        end: timing.bedtime,
+        totalMinutes: bedtime - shiftEnd
+      };
+    } else if (shift.code === '2') {
+      // Evening/night shift: available before shift starts
+      const wakeTime = this._timeToMinutes(timing.wakeTime); // 07:00
+      const shiftStart = this._timeToMinutes(shift.timeStart); // 16:00
+      return {
+        start: timing.wakeTime,
+        end: shift.timeStart,
+        totalMinutes: shiftStart - wakeTime
+      };
+    } else if (shift.code === '3') {
+      // Night shift: available from end to bedtime
+      const shiftEnd = this._timeToMinutes(shift.timeEnd); // 07:00
+      const bedtime = this._timeToMinutes(timing.bedtime); // 08:00
+      return {
+        start: shift.timeEnd,
+        end: timing.bedtime,
+        totalMinutes: bedtime - shiftEnd
+      };
+    }
+
+    return { start: '07:00', end: '23:00', totalMinutes: 960 };
+  }
+
+  generatePlanWithShift(tasks, shift) {
+    const available = this.calculateAvailableTime(shift);
+    const totalEstimated = tasks.reduce((sum, t) => sum + (t.estimatedMinutes || t.time_estimate || 0), 0);
+    const workloadPercentage = Math.round((totalEstimated / available.totalMinutes) * 100);
+
+    const blocks = this._createTimeBlocks(tasks, available);
+
+    return {
+      availableTime: available,
+      blockedTime: {
+        start: shift.timeStart,
+        end: shift.timeEnd
+      },
+      blocks,
+      totalEstimated,
+      workloadPercentage,
+      warning: workloadPercentage > 100 ? `Tasks exceed available time by ${workloadPercentage - 100}%` : null
+    };
+  }
+
+  _createTimeBlocks(tasks, available) {
+    const blocks = [];
+    let currentTime = this._timeToMinutes(available.start);
+    const endTime = this._timeToMinutes(available.end);
+
+    for (const task of tasks) {
+      const taskMinutes = task.estimatedMinutes || task.time_estimate || 30;
+      if (currentTime + taskMinutes <= endTime) {
+        blocks.push({
+          taskId: task.id,
+          title: task.title || task.name,
+          startTime: this._minutesToTime(currentTime),
+          endTime: this._minutesToTime(currentTime + taskMinutes),
+          estimatedMinutes: taskMinutes,
+          energyLevel: task.energyLevel || task.energy_level
+        });
+        currentTime += taskMinutes;
+      }
+    }
+
+    return blocks;
+  }
+
+  _timeToMinutes(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  }
+
+  _minutesToTime(minutes) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
   }
 
   formatPlanMessage(plan) {
