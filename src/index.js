@@ -1,5 +1,6 @@
 const config = require('./config');
 const logger = require('./utils/logger');
+const schedule = require('node-schedule');
 
 // Initialize clients and services
 const TelegramBot = require('./bot/telegram-bot');
@@ -327,6 +328,24 @@ async function main() {
         await bot.sendMessage('⏭️ Article skipped');
       }
     });
+
+    // Schedule automatic daily plan generation (8 AM)
+    schedule.scheduleJob('0 8 * * *', async () => {
+      try {
+        logger.info('⏰ Running scheduled daily plan generation...');
+        const result = await planCommand.generatePlanForDate('today');
+
+        await bot.sendMessage(
+          '📅 *Good morning!* Here\'s your shift-aware daily plan:\n\n' +
+          result.formatted
+        );
+        logger.info('✅ Daily plan sent successfully');
+      } catch (error) {
+        logger.error(`Failed to generate scheduled plan: ${error.message}`);
+        // Don't send error message to user for scheduled tasks
+      }
+    });
+    logger.info('📅 Scheduled daily plan generation at 08:00');
 
     logger.info('System started successfully! 🚀');
     logger.info('Bot is now listening for messages...');
