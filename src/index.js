@@ -11,6 +11,7 @@ const TududuClient = require('./tududi/client');
 const ObsidianFileManager = require('./obsidian/file-manager');
 const ObsidianSyncWatcher = require('./obsidian/sync-watcher');
 const MessageOrchestrator = require('./orchestrator');
+const { initializeShiftSchedule } = require('./shift-schedule');
 
 async function main() {
   try {
@@ -42,11 +43,27 @@ async function main() {
 
     const dailyPlanner = new DailyPlanner(llmClient, tududuClient);
 
+    // Initialize shift schedule if Google Sheets ID is configured
+    let shiftSchedule = null;
+    if (config.googleSheetId) {
+      try {
+        shiftSchedule = await initializeShiftSchedule({
+          googleSheetId: config.googleSheetId,
+          shiftDataPath: '.cache/shifts.json',
+          autoFetch: true
+        });
+        logger.info('✅ Shift schedule initialized');
+      } catch (error) {
+        logger.warn(`⚠️ Shift schedule initialization failed: ${error.message}. Continuing without shift awareness.`);
+      }
+    }
+
     const orchestrator = new MessageOrchestrator({
       taskParser,
       tududuClient,
       fileManager,
-      bot
+      bot,
+      shiftManager: shiftSchedule?.manager
     });
 
     // Set up Obsidian sync watcher

@@ -81,6 +81,7 @@ module.exports = {
     vaultPath: required('OBSIDIAN_VAULT_PATH'),
     dailyNotesPath: optional('OBSIDIAN_DAILY_NOTES_PATH', 'Daily Notes'),
   },
+  googleSheetId: optionalKey('GOOGLE_SHEETS_ID'),
   timezone: optional('TIMEZONE', 'Asia/Jakarta'),
   port: parseInteger('PORT', process.env.PORT, '3001'),
 };
