@@ -1,5 +1,6 @@
 const config = require('./config');
 const logger = require('./utils/logger');
+const schedule = require('node-schedule');
 
 // Initialize clients and services
 const TelegramBot = require('./bot/telegram-bot');
@@ -11,6 +12,10 @@ const TududuClient = require('./tududi/client');
 const ObsidianFileManager = require('./obsidian/file-manager');
 const ObsidianSyncWatcher = require('./obsidian/sync-watcher');
 const MessageOrchestrator = require('./orchestrator');
+const { initializeShiftSchedule } = require('./shift-schedule');
+const PlanCommand = require('./commands/plan-command');
+const { ArticleParser } = require('./article-parser');
+const { KnowledgeSearchService } = require('./knowledge-search');
 
 async function main() {
   try {
@@ -42,11 +47,49 @@ async function main() {
 
     const dailyPlanner = new DailyPlanner(llmClient, tududuClient);
 
+    // Initialize shift schedule if Google Sheets ID is configured
+    let shiftSchedule = null;
+    if (config.googleSheetId) {
+      try {
+        shiftSchedule = await initializeShiftSchedule({
+          googleSheetId: config.googleSheetId,
+          shiftDataPath: '.cache/shifts.json',
+          autoFetch: true
+        });
+        logger.info('✅ Shift schedule initialized');
+      } catch (error) {
+        logger.warn(`⚠️ Shift schedule initialization failed: ${error.message}. Continuing without shift awareness.`);
+      }
+    }
+
+    // Initialize article parser
+    const articleParser = new ArticleParser({
+      vaultPath: config.obsidian.vaultPath
+    });
+    logger.info('✅ Article parser initialized');
+
+    // Initialize knowledge search
+    const knowledgeSearch = new KnowledgeSearchService({
+      vaultPath: config.obsidian.vaultPath
+    });
+    logger.info('✅ Knowledge search service initialized');
+
+    // Initialize plan command
+    const planCommand = new PlanCommand({
+      shiftManager: shiftSchedule?.manager,
+      tududi: tududuClient,
+      dailyPlanner: dailyPlanner
+    });
+    logger.info('✅ Plan command initialized');
+
     const orchestrator = new MessageOrchestrator({
       taskParser,
       tududuClient,
       fileManager,
-      bot
+      bot,
+      shiftManager: shiftSchedule?.manager,
+      articleParser,
+      knowledgeSearch
     });
 
     // Set up Obsidian sync watcher
@@ -71,6 +114,45 @@ async function main() {
     bot.onMessage(async (msg) => {
       const message = msg.text;
       logger.info(`Received message: ${message}`);
+
+      // Check if message contains URLs (for article parsing)
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const urls = message.match(urlRegex);
+
+      if (urls && urls.length > 0) {
+        try {
+          logger.info(`Found ${urls.length} URL(s) in message, attempting article parsing`);
+          const articleResult = await articleParser.handleArticleMessage(message);
+
+          if (articleResult.type === 'article_urls_found') {
+            await bot.sendMessage(articleResult.formatted);
+
+            // Offer to save articles
+            for (const result of articleResult.results) {
+              if (result.parseResult.success) {
+                const suggestedTopic = result.suggestedTopics[0] || 'Uncategorized';
+                await bot.sendMessage(
+                  `📖 Found: ${result.parseResult.content.title}\n` +
+                  `📁 Save as: *${suggestedTopic}*?`,
+                  {
+                    reply_markup: {
+                      inline_keyboard: [[
+                        { text: '✅ Save', callback_data: `save_article:${result.url}:${suggestedTopic}` },
+                        { text: '⏭️ Skip', callback_data: 'skip_article' }
+                      ]]
+                    }
+                  }
+                );
+              }
+            }
+            return;
+          }
+        } catch (articleError) {
+          logger.warn(`Article parsing failed: ${articleError.message}, falling back to normal handling`);
+        }
+      }
+
+      // Fall back to orchestrator for normal message handling
       await orchestrator.handleMessage(message);
     });
 
@@ -114,14 +196,25 @@ async function main() {
         '• Just send a message with tasks or ideas\n' +
         '• Use voice messages for faster capture\n' +
         '• Tasks are automatically parsed and organized\n' +
-        '• Knowledge is saved to Obsidian\n\n' +
+        '• Share article links to save them\n' +
+        '• Search your knowledge base\n\n' +
+        '**Commands:**\n' +
+        '/plan [today|tomorrow|YYYY-MM-DD] - Generate shift-aware daily plan\n' +
+        '/search <query> - Search your knowledge notes\n' +
+        '/summary - Get summary of all knowledge\n' +
+        '/status - System status\n\n' +
         '**Examples:**\n' +
         '• "beli susu anak besok"\n' +
         '• "meeting with client next Monday 2pm"\n' +
-        '• "bitcoin dips before US open" (knowledge)\n\n' +
+        '• "bitcoin dips before US open"\n' +
+        '• https://medium.com/article-link\n' +
+        '• /search bitcoin\n' +
+        '• /plan tomorrow\n\n' +
         '**Special features:**\n' +
         '• Natural language dates (besok, next week, etc.)\n' +
         '• Multiple tasks in one message\n' +
+        '• Shift-aware time blocking\n' +
+        '• Multi-source article parsing\n' +
         '• Indonesian language support'
       );
     });
@@ -129,32 +222,178 @@ async function main() {
     bot.onCommand('status', async () => {
       const tasks = await tududuClient.getTasks({ completed: false });
       const providerNames = llmClient.getProviderNames();
+      const shiftStatus = shiftSchedule ? '✅ Enabled' : '⏸️ Disabled';
+
       await bot.sendMessage(
         `**System Status** ✅\n\n` +
         `📋 Active tasks: ${tasks.length}\n` +
         `🧠 LLM Providers: ${providerNames.join(' → ')}\n` +
         `🎯 Primary: ${llmClient.getPrimaryProvider()}\n` +
+        `⏰ Shift Schedule: ${shiftStatus}\n` +
         `💾 Obsidian: Connected\n` +
+        `🔍 Knowledge Search: Enabled\n` +
+        `📖 Article Parser: Enabled\n` +
         `📡 Tududi API: Connected`
       );
     });
 
     bot.onCommand('plan', async (msg) => {
       try {
-        await bot.sendMessage('🤔 Generating your daily plan...');
+        const commandText = msg.text || '/plan';
+        const timeframeArg = commandText.split(' ').slice(1).join(' ').trim();
 
-        // For now, assume 8 hours available (can be improved with calendar integration)
-        const plan = await dailyPlanner.generatePlan({
-          available_hours: 8,
-          description: '8 hours free time today'
-        });
+        await bot.sendMessage('🤔 Generating your shift-aware daily plan...');
 
-        const message = dailyPlanner.formatPlanMessage(plan);
-        await bot.sendMessage(message);
+        const result = await planCommand.generatePlanForDate(timeframeArg || 'today');
+        await bot.sendMessage(result.formatted);
       } catch (error) {
         await bot.sendMessage(`❌ Failed to generate plan: ${error.message}`);
       }
     });
+
+    bot.onCommand('search', async (msg) => {
+      try {
+        const commandText = msg.text || '/search';
+        const query = commandText.replace('/search', '').trim();
+
+        if (!query) {
+          await bot.sendMessage('❓ Please provide a search query.\n\n*Examples:*\n/search bitcoin\n/search trading strategies');
+          return;
+        }
+
+        await bot.sendMessage('🔍 Searching your knowledge base...');
+
+        const result = await knowledgeSearch.handleQuery(query);
+
+        if (result.results && result.results.length > 0) {
+          await bot.sendMessage(result.formatted);
+        } else {
+          await bot.sendMessage(`❌ No results found for: *${query}*`);
+        }
+      } catch (error) {
+        logger.error(`Search failed: ${error.message}`);
+        await bot.sendMessage(`❌ Search failed: ${error.message}`);
+      }
+    });
+
+    bot.onCommand('summary', async (msg) => {
+      try {
+        await bot.sendMessage('📊 Generating knowledge summary...');
+
+        const result = await knowledgeSearch.summarizeAll();
+
+        if (result.success) {
+          await bot.sendMessage(result.formatted);
+        } else {
+          await bot.sendMessage(`❌ Failed to generate summary: ${result.error}`);
+        }
+      } catch (error) {
+        logger.error(`Summary failed: ${error.message}`);
+        await bot.sendMessage(`❌ Summary failed: ${error.message}`);
+      }
+    });
+
+    // Helper function to validate URLs (prevent SSRF attacks)
+    const isValidUrl = (url) => {
+      try {
+        const parsed = new URL(url);
+        // Only allow http/https protocols
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
+          return false;
+        }
+        const hostname = parsed.hostname;
+        // Block private IP ranges and localhost
+        if (hostname === 'localhost' ||
+            hostname === '127.0.0.1' ||
+            hostname.match(/^127\./) ||
+            hostname.match(/^10\./) ||
+            hostname.match(/^172\.(1[6-9]|2[0-9]|3[01])\./) ||
+            hostname.match(/^192\.168\./) ||
+            hostname.match(/^169\.254\./) ||
+            hostname.match(/^::1/) || // IPv6 localhost
+            hostname.match(/^fc00:|^fe80:/) // IPv6 private ranges
+        ) {
+          return false;
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    // Handle article saving callback
+    bot.onCallbackQuery(async (query) => {
+      const data = query.data;
+
+      // Verify user ID for security
+      if (query.from.id.toString() !== config.telegram.userId) {
+        logger.warn(`Unauthorized callback from user ${query.from.id}`);
+        return;
+      }
+
+      if (data.startsWith('save_article:')) {
+        try {
+          const parts = data.split(':');
+          const url = parts.slice(1, -1).join(':'); // Handle URLs with colons
+          const topic = parts[parts.length - 1];
+
+          // Validate URL before processing (SSRF prevention)
+          if (!isValidUrl(url)) {
+            await bot.sendMessage('❌ Invalid or untrusted URL');
+            logger.warn(`Rejected invalid URL: ${url}`);
+            return;
+          }
+
+          // Parse the article
+          const parseResult = await articleParser.parseUrl(url);
+
+          if (parseResult.success) {
+            const saveResult = await articleParser.saveArticle(
+              parseResult.content,
+              'Saved from Telegram',
+              topic
+            );
+
+            await bot.sendMessage(
+              `✅ Saved to 📁 *${topic}*\n\n${saveResult.message}`
+            );
+            logger.info(`Article saved: ${url}`);
+          } else {
+            await bot.sendMessage(`❌ Failed to save article: ${parseResult.error}`);
+          }
+        } catch (error) {
+          logger.error(`Article saving failed: ${error.message}`);
+          await bot.sendMessage(`❌ Error saving article: ${error.message}`);
+        }
+      } else if (data === 'skip_article') {
+        await bot.sendMessage('⏭️ Article skipped');
+      }
+    });
+
+    // Schedule automatic daily plan generation (8 AM)
+    schedule.scheduleJob('0 8 * * *', async () => {
+      try {
+        logger.info('⏰ Running scheduled daily plan generation...');
+        const result = await planCommand.generatePlanForDate('today');
+
+        await bot.sendMessage(
+          '📅 *Good morning!* Here\'s your shift-aware daily plan:\n\n' +
+          result.formatted
+        );
+        logger.info('✅ Daily plan sent successfully');
+      } catch (error) {
+        logger.error(`Failed to generate scheduled plan: ${error.message}`);
+        // Notify user of failure for scheduled tasks
+        try {
+          await bot.sendMessage(
+            '⚠️ Daily plan generation failed. Please use /plan to retry manually.'
+          );
+        } catch (notifyError) {
+          logger.error(`Failed to notify user of plan generation failure: ${notifyError.message}`);
+        }
+      }
+    });
+    logger.info('📅 Scheduled daily plan generation at 08:00');
 
     logger.info('System started successfully! 🚀');
     logger.info('Bot is now listening for messages...');
