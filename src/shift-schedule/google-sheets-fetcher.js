@@ -4,13 +4,14 @@ const logger = require('../utils/logger');
 class GoogleSheetsFetcher {
   constructor(config) {
     this.sheetId = config.sheetId;
+    this.sheetGid = config.sheetGid || 0; // Configurable sheet GID, defaults to first sheet
     this.timeout = config.timeout || 10000;
   }
 
-  getExportUrl(sheetName = 'NOV 2025') {
-    // For initial implementation, we fetch by sheet name
-    // Real implementation would need sheet GID from metadata
-    return `https://docs.google.com/spreadsheets/d/${this.sheetId}/export?format=csv&gid=0`;
+  getExportUrl() {
+    // Export spreadsheet in CSV format from the configured sheet (GID)
+    // Note: GID is the sheet identifier within the spreadsheet (0 = first sheet)
+    return `https://docs.google.com/spreadsheets/d/${this.sheetId}/export?format=csv&gid=${this.sheetGid}`;
   }
 
   async fetchCSV() {

@@ -8,10 +8,37 @@ class NoteCreator {
     this.knowledgeFolder = 'Knowledge';
   }
 
+  _sanitizeTopic(topic) {
+    // Remove path traversal attempts, absolute paths, and invalid characters
+    const sanitized = (topic || '')
+      .replace(/\.\./g, '')
+      .replace(/^\/+/, '')
+      .replace(/[^a-zA-Z0-9_\-\s]/g, '')
+      .trim()
+      .substring(0, 50);
+
+    if (!sanitized) {
+      throw new Error('Invalid topic name: topic cannot be empty after sanitization');
+    }
+
+    return sanitized;
+  }
+
   async createNote(article, userReason, topic) {
     try {
+      // Sanitize and validate topic
+      const sanitizedTopic = this._sanitizeTopic(topic);
+
       // Create folder structure
-      const topicFolder = path.join(this.vaultPath, this.knowledgeFolder, topic);
+      const topicFolder = path.join(this.vaultPath, this.knowledgeFolder, sanitizedTopic);
+
+      // Verify the resulting path is within the vault (path traversal check)
+      const resolvedPath = path.resolve(topicFolder);
+      const resolvedVaultPath = path.resolve(this.vaultPath);
+      if (!resolvedPath.startsWith(resolvedVaultPath)) {
+        throw new Error('Path traversal detected: topic path must be within vault');
+      }
+
       await fs.mkdir(topicFolder, { recursive: true });
 
       // Generate filename

@@ -45,7 +45,7 @@ async function main() {
       dailyNotesPath: config.obsidian.dailyNotesPath
     });
 
-    const dailyPlanner = new DailyPlanner(llmClient, tututuClient);
+    const dailyPlanner = new DailyPlanner(llmClient, tududuClient);
 
     // Initialize shift schedule if Google Sheets ID is configured
     let shiftSchedule = null;
@@ -77,14 +77,14 @@ async function main() {
     // Initialize plan command
     const planCommand = new PlanCommand({
       shiftManager: shiftSchedule?.manager,
-      tududi: tututuClient,
+      tududi: tududuClient,
       dailyPlanner: dailyPlanner
     });
     logger.info('✅ Plan command initialized');
 
     const orchestrator = new MessageOrchestrator({
       taskParser,
-      tututuClient,
+      tududuClient,
       fileManager,
       bot,
       shiftManager: shiftSchedule?.manager,
@@ -220,7 +220,7 @@ async function main() {
     });
 
     bot.onCommand('status', async () => {
-      const tasks = await tututuClient.getTasks({ completed: false });
+      const tasks = await tududuClient.getTasks({ completed: false });
       const providerNames = llmClient.getProviderNames();
       const shiftStatus = shiftSchedule ? '✅ Enabled' : '⏸️ Disabled';
 
@@ -293,15 +293,56 @@ async function main() {
       }
     });
 
+    // Helper function to validate URLs (prevent SSRF attacks)
+    const isValidUrl = (url) => {
+      try {
+        const parsed = new URL(url);
+        // Only allow http/https protocols
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
+          return false;
+        }
+        const hostname = parsed.hostname;
+        // Block private IP ranges and localhost
+        if (hostname === 'localhost' ||
+            hostname === '127.0.0.1' ||
+            hostname.match(/^127\./) ||
+            hostname.match(/^10\./) ||
+            hostname.match(/^172\.(1[6-9]|2[0-9]|3[01])\./) ||
+            hostname.match(/^192\.168\./) ||
+            hostname.match(/^169\.254\./) ||
+            hostname.match(/^::1/) || // IPv6 localhost
+            hostname.match(/^fc00:|^fe80:/) // IPv6 private ranges
+        ) {
+          return false;
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
     // Handle article saving callback
     bot.onCallbackQuery(async (query) => {
       const data = query.data;
+
+      // Verify user ID for security
+      if (query.from.id.toString() !== config.telegram.userId) {
+        logger.warn(`Unauthorized callback from user ${query.from.id}`);
+        return;
+      }
 
       if (data.startsWith('save_article:')) {
         try {
           const parts = data.split(':');
           const url = parts.slice(1, -1).join(':'); // Handle URLs with colons
           const topic = parts[parts.length - 1];
+
+          // Validate URL before processing (SSRF prevention)
+          if (!isValidUrl(url)) {
+            await bot.sendMessage('❌ Invalid or untrusted URL');
+            logger.warn(`Rejected invalid URL: ${url}`);
+            return;
+          }
 
           // Parse the article
           const parseResult = await articleParser.parseUrl(url);
@@ -342,7 +383,14 @@ async function main() {
         logger.info('✅ Daily plan sent successfully');
       } catch (error) {
         logger.error(`Failed to generate scheduled plan: ${error.message}`);
-        // Don't send error message to user for scheduled tasks
+        // Notify user of failure for scheduled tasks
+        try {
+          await bot.sendMessage(
+            '⚠️ Daily plan generation failed. Please use /plan to retry manually.'
+          );
+        } catch (notifyError) {
+          logger.error(`Failed to notify user of plan generation failure: ${notifyError.message}`);
+        }
       }
     });
     logger.info('📅 Scheduled daily plan generation at 08:00');
