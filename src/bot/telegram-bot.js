@@ -4,14 +4,19 @@ const logger = require('../utils/logger');
 class TelegramBot {
   constructor(config) {
     this.token = config.token;
-    this.userId = config.userId;
+    // Support both old (userId) and new (allowedUsers) config formats
+    this.allowedUsers = config.allowedUsers || (config.userId ? [parseInt(config.userId)] : []);
+    // Keep userId for backward compatibility (first allowed user)
+    this.userId = this.allowedUsers[0];
+    // Track current chat for context-aware replies
+    this.currentChatId = null;
     this.bot = new TelegramBotAPI(this.token, { polling: true });
 
-    logger.info('Telegram bot initialized');
+    logger.info(`Telegram bot initialized with ${this.allowedUsers.length} allowed user(s)`);
   }
 
   isAuthorized(msg) {
-    return msg.from.id === parseInt(this.userId);
+    return this.allowedUsers.includes(msg.from.id);
   }
 
   onMessage(handler) {
@@ -25,6 +30,9 @@ class TelegramBot {
       if (msg.voice) {
         return;
       }
+
+      // Set current chat context for replies
+      this.currentChatId = msg.chat.id;
 
       try {
         await handler(msg);
@@ -42,6 +50,9 @@ class TelegramBot {
         return;
       }
 
+      // Set current chat context for replies
+      this.currentChatId = msg.chat.id;
+
       try {
         await handler(msg);
       } catch (error) {
@@ -56,6 +67,9 @@ class TelegramBot {
       if (!this.isAuthorized(msg)) {
         return;
       }
+
+      // Set current chat context for replies
+      this.currentChatId = msg.chat.id;
 
       try {
         await handler(msg);
@@ -73,33 +87,39 @@ class TelegramBot {
         disable_web_page_preview: true
       };
 
+      // Use provided chatId, or currentChatId, or fall back to first allowed user
+      const chatId = options.chatId || this.currentChatId || this.userId;
+      delete options.chatId; // Remove from options before spreading
+
       await this.bot.sendMessage(
-        this.userId,
+        chatId,
         text,
         { ...defaultOptions, ...options }
       );
 
-      logger.info('Message sent to user');
+      logger.info(`Message sent to user ${chatId}`);
     } catch (error) {
       logger.error(`Failed to send message: ${error.message}`);
       throw error;
     }
   }
 
-  async sendStatusMessage(text) {
+  async sendStatusMessage(text, chatId = null) {
     try {
       const defaultOptions = {
         parse_mode: 'Markdown',
         disable_web_page_preview: true
       };
 
+      const targetChatId = chatId || this.currentChatId || this.userId;
+
       const msg = await this.bot.sendMessage(
-        this.userId,
+        targetChatId,
         text,
         defaultOptions
       );
 
-      logger.info(`Status message sent with ID: ${msg.message_id}`);
+      logger.info(`Status message sent with ID: ${msg.message_id} to ${targetChatId}`);
       return msg.message_id;
     } catch (error) {
       logger.error(`Failed to send status message: ${error.message}`);
@@ -107,23 +127,25 @@ class TelegramBot {
     }
   }
 
-  async editStatusMessage(messageId, text) {
+  async editStatusMessage(messageId, text, chatId = null) {
     try {
       const defaultOptions = {
         parse_mode: 'Markdown',
         disable_web_page_preview: true
       };
 
+      const targetChatId = chatId || this.currentChatId || this.userId;
+
       await this.bot.editMessageText(
         text,
         {
-          chat_id: this.userId,
+          chat_id: targetChatId,
           message_id: messageId,
           ...defaultOptions
         }
       );
 
-      logger.info(`Status message ${messageId} updated`);
+      logger.info(`Status message ${messageId} updated for ${targetChatId}`);
     } catch (error) {
       logger.error(`Failed to edit status message: ${error.message}`);
       throw error;
@@ -158,9 +180,13 @@ class TelegramBot {
 
   onCallbackQuery(handler) {
     this.bot.on('callback_query', async (query) => {
-      if (query.from.id !== parseInt(this.userId)) {
+      if (!this.allowedUsers.includes(query.from.id)) {
+        logger.warn(`Unauthorized callback query from user ${query.from.id}`);
         return;
       }
+
+      // Set current chat context
+      this.currentChatId = query.message?.chat?.id || query.from.id;
 
       try {
         await handler(query);

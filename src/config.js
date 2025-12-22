@@ -37,10 +37,31 @@ function optionalKey(name) {
   return value;
 }
 
+function parseUserIdList(envName, legacyEnvName) {
+  // Try new multi-user format first
+  const multiUserValue = process.env[envName];
+  if (multiUserValue && multiUserValue.trim() !== '') {
+    return multiUserValue.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+  }
+  // Fall back to legacy single user
+  const legacyValue = process.env[legacyEnvName];
+  if (legacyValue && legacyValue.trim() !== '') {
+    const parsed = parseInt(legacyValue.trim());
+    if (!isNaN(parsed)) {
+      return [parsed];
+    }
+  }
+  throw new Error(`Either ${envName} or ${legacyEnvName} is required in environment variables`);
+}
+
 module.exports = {
   telegram: {
     botToken: required('TELEGRAM_BOT_TOKEN'),
-    userId: required('TELEGRAM_USER_ID'),
+    allowedUsers: parseUserIdList('TELEGRAM_ALLOWED_USERS', 'TELEGRAM_USER_ID'),
+    // Deprecated: kept for backward compatibility in code that still references userId
+    get userId() {
+      return this.allowedUsers[0];
+    },
   },
   // LLM Provider List (fallback order)
   llm: {

@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-12-23
+
+### Added
+- **Multi-user Support**: Bot now supports multiple authorized Telegram users via `TELEGRAM_ALLOWED_USERS` env var (comma-separated IDs).
+- Chat-based reply routing: Messages are now sent to the correct chat context.
+
+### Changed
+- `config.js`: Added `parseUserIdList()` helper, `allowedUsers` array with backward-compatible `userId` getter.
+- `telegram-bot.js`: `isAuthorized()` checks array, all handlers track `currentChatId`.
+- `.env.example`: Documented multi-user configuration.
+
+### Deprecated
+- `TELEGRAM_USER_ID` env var (still works, but use `TELEGRAM_ALLOWED_USERS` for new deployments).
+
+### Files Modified
+- `src/config.js`
+- `src/bot/telegram-bot.js`
+- `src/index.js`
+- `.env.example`
+
+### Reference
+- Session: ab7590e3-070b-4a85-a0d8-eeea4f9edb3f
+
 ## [1.0.1] - 2025-12-22
 
 ### Fixed

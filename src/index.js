@@ -24,7 +24,7 @@ async function main() {
     // Initialize services
     const bot = new TelegramBot({
       token: config.telegram.botToken,
-      userId: config.telegram.userId
+      allowedUsers: config.telegram.allowedUsers
     });
 
     const transcriber = new VoiceTranscriber({
@@ -304,14 +304,14 @@ async function main() {
         const hostname = parsed.hostname;
         // Block private IP ranges and localhost
         if (hostname === 'localhost' ||
-            hostname === '127.0.0.1' ||
-            hostname.match(/^127\./) ||
-            hostname.match(/^10\./) ||
-            hostname.match(/^172\.(1[6-9]|2[0-9]|3[01])\./) ||
-            hostname.match(/^192\.168\./) ||
-            hostname.match(/^169\.254\./) ||
-            hostname.match(/^::1/) || // IPv6 localhost
-            hostname.match(/^fc00:|^fe80:/) // IPv6 private ranges
+          hostname === '127.0.0.1' ||
+          hostname.match(/^127\./) ||
+          hostname.match(/^10\./) ||
+          hostname.match(/^172\.(1[6-9]|2[0-9]|3[01])\./) ||
+          hostname.match(/^192\.168\./) ||
+          hostname.match(/^169\.254\./) ||
+          hostname.match(/^::1/) || // IPv6 localhost
+          hostname.match(/^fc00:|^fe80:/) // IPv6 private ranges
         ) {
           return false;
         }
@@ -322,14 +322,9 @@ async function main() {
     };
 
     // Handle article saving callback
+    // Note: Authorization is already handled by bot.onCallbackQuery
     bot.onCallbackQuery(async (query) => {
       const data = query.data;
-
-      // Verify user ID for security
-      if (query.from.id.toString() !== config.telegram.userId) {
-        logger.warn(`Unauthorized callback from user ${query.from.id}`);
-        return;
-      }
 
       if (data.startsWith('save_article:')) {
         try {
