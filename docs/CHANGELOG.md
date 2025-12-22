@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-12-23
+
+### Added
+- **Chaos Mode**: `/chaos` command activates simplified task view (only urgent/quick tasks)
+- **Normal Mode**: `/normal` command deactivates and prompts for re-planning
+- Per-user chaos mode state for multi-user support
+- Task filtering: quick (≤15m), urgent priority, or due today
+
+### Files Added
+- `src/chaos-mode/index.js` - ChaosMode service
+- `tests/chaos-mode/chaos-mode.test.js` - 13 tests
+
+### Files Modified
+- `src/index.js` - Added `/chaos` and `/normal` commands
+
+### Reference
+- Session: ab7590e3-070b-4a85-a0d8-eeea4f9edb3f
+
 ## [1.1.0] - 2025-12-23
 
 ### Added

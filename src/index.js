@@ -16,6 +16,7 @@ const { initializeShiftSchedule } = require('./shift-schedule');
 const PlanCommand = require('./commands/plan-command');
 const { ArticleParser } = require('./article-parser');
 const { KnowledgeSearchService } = require('./knowledge-search');
+const ChaosMode = require('./chaos-mode');
 
 async function main() {
   try {
@@ -81,6 +82,10 @@ async function main() {
       dailyPlanner: dailyPlanner
     });
     logger.info('✅ Plan command initialized');
+
+    // Initialize chaos mode service
+    const chaosMode = new ChaosMode();
+    logger.info('✅ Chaos mode service initialized');
 
     const orchestrator = new MessageOrchestrator({
       taskParser,
@@ -248,6 +253,37 @@ async function main() {
         await bot.sendMessage(result.formatted);
       } catch (error) {
         await bot.sendMessage(`❌ Failed to generate plan: ${error.message}`);
+      }
+    });
+
+    bot.onCommand('chaos', async (msg) => {
+      try {
+        const chatId = msg.chat.id;
+        chaosMode.activate(chatId);
+
+        // Fetch incomplete tasks and filter them
+        const allTasks = await tududuClient.getTasks({ completed: false });
+        const filteredTasks = chaosMode.filterTasks(allTasks, chatId);
+
+        const response = chaosMode.formatChaosModeMessage(filteredTasks);
+        await bot.sendMessage(response);
+      } catch (error) {
+        logger.error(`Chaos mode activation failed: ${error.message}`);
+        await bot.sendMessage(`❌ Failed to activate chaos mode: ${error.message}`);
+      }
+    });
+
+    bot.onCommand('normal', async (msg) => {
+      try {
+        const chatId = msg.chat.id;
+        const status = chaosMode.getStatus(chatId);
+        chaosMode.deactivate(chatId);
+
+        const response = chaosMode.formatNormalModeMessage(status.duration);
+        await bot.sendMessage(response);
+      } catch (error) {
+        logger.error(`Normal mode restoration failed: ${error.message}`);
+        await bot.sendMessage(`❌ Failed to restore normal mode: ${error.message}`);
       }
     });
 
