@@ -69,7 +69,7 @@ module.exports = {
     baseURL: optional('MEGALLM_BASE_URL', 'https://ai.megallm.io/v1'),
   },
   openai: {
-    apiKey: optionalKey('OPENAI_API_KEY') || required('OPENAI_API_KEY'), // Keep required for backward compatibility with Whisper
+    apiKey: optionalKey('OPENAI_API_KEY'), // Optional - Whisper transcription will fail gracefully if not set
     model: optional('OPENAI_MODEL', 'gpt-4'),
     maxTokens: parseInteger('OPENAI_MAX_TOKENS', process.env.OPENAI_MAX_TOKENS, '4096'),
   },
