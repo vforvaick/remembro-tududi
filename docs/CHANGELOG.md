@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-12-24
+
+### Added
+- **Semantic Search Integration**: Questions are now answered using knowledge base search
+- Orchestrator's `handleQuestionMessage()` now uses `KnowledgeSearchService` instead of placeholder
+
+### Files Modified
+- `src/orchestrator.js` - Connected question handling to knowledge search
+
+### Reference
+- Session: ab7590e3-070b-4a85-a0d8-eeea4f9edb3f
+
 ## [1.2.0] - 2025-12-23
 
 ### Added

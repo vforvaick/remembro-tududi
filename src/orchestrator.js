@@ -6,6 +6,7 @@ class MessageOrchestrator {
     this.tududuClient = dependencies.tududuClient;
     this.fileManager = dependencies.fileManager;
     this.bot = dependencies.bot;
+    this.knowledgeSearch = dependencies.knowledgeSearch;
   }
 
   async handleMessage(message) {
@@ -170,13 +171,46 @@ class MessageOrchestrator {
   }
 
   async handleQuestionMessage(parsed, statusMessageId) {
-    // Placeholder for future semantic search
-    const response = '❓ Question mode coming soon! For now, you can search manually in Obsidian.';
+    try {
+      // Use knowledge search if available
+      if (this.knowledgeSearch) {
+        const query = parsed.query || parsed.content || parsed.title;
+        logger.info(`Searching knowledge base for: ${query}`);
 
-    if (statusMessageId) {
-      await this.bot.editStatusMessage(statusMessageId, response);
-    } else {
-      await this.bot.sendMessage(response);
+        const result = await this.knowledgeSearch.handleQuery(query);
+
+        let response;
+        if (result && result.results && result.results.length > 0) {
+          response = result.formatted;
+        } else {
+          response = `❓ No matching knowledge found for "${query}".\n\n` +
+            `_Try a different search term or use /search <query>._`;
+        }
+
+        if (statusMessageId) {
+          await this.bot.editStatusMessage(statusMessageId, response);
+        } else {
+          await this.bot.sendMessage(response);
+        }
+      } else {
+        // Fallback if knowledge search not configured
+        const response = '❓ Knowledge search is not configured. Use /search <query> instead.';
+
+        if (statusMessageId) {
+          await this.bot.editStatusMessage(statusMessageId, response);
+        } else {
+          await this.bot.sendMessage(response);
+        }
+      }
+    } catch (error) {
+      logger.error(`Question handling failed: ${error.message}`);
+      const response = `❌ Search failed: ${error.message}`;
+
+      if (statusMessageId) {
+        await this.bot.editStatusMessage(statusMessageId, response);
+      } else {
+        await this.bot.sendMessage(response);
+      }
     }
   }
 }
