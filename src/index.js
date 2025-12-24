@@ -263,8 +263,8 @@ async function main() {
         '/reschedule - View and reschedule overdue tasks\n' +
         '/recurring - View registered recurring tasks\n' +
         '/review - Weekly productivity summary\n' +
-        '/status - Show system status\\n' +
-        '/today - Today\\'s calendar events\\n' +
+        '/status - Show system status\n' +
+        '/today - Today\'s calendar events\n' +
         '/calendar - Upcoming events'
       );
     });
