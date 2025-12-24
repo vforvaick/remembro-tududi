@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-12-24
+
+### Added
+- **Weekly Review**: `/review` command shows productivity stats for past 7 days
+- **Voice Diarization**: ElevenLabs Scribe integration for speaker detection (up to 32 speakers)
+- Indonesian language support for voice transcription
+
+### Files Added
+- `src/weekly-review/index.js` - WeeklyReviewService
+- `src/bot/elevenlabs-transcriber.js` - ElevenLabsTranscriber  
+- `tests/weekly-review/weekly-review.test.js` - 7 tests
+- `tests/bot/elevenlabs-transcriber.test.js` - 6 tests
+
+### Files Modified
+- `src/config.js` - Added elevenlabs config
+- `src/index.js` - Added /review command and ElevenLabs voice handler
+- `.env.example` - Added ELEVENLABS_API_KEY
+
+### Reference
+- Session: ab7590e3-070b-4a85-a0d8-eeea4f9edb3f
+
 ## [1.5.0] - 2025-12-24
 
 ### Added

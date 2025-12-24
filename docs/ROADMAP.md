@@ -11,8 +11,8 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 
 
 ### Medium Priority
-- [ ] **Weekly Review Dashboard**: A summary of completed tasks, productivity stats, and goals for the next week.
-- [ ] **Voice Memo Diarization**: Support for distinguishing speakers in multi-user voice notes.
+- [x] **Weekly Review Dashboard**: `/review` command with productivity stats ✅
+- [x] **Voice Memo Diarization**: ElevenLabs Scribe with speaker detection ✅
 
 ## Known Issues
 *No critical issues at this time.*

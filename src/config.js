@@ -94,6 +94,9 @@ module.exports = {
     model: optional('OPENAI_MODEL', 'gpt-4'),
     maxTokens: parseInteger('OPENAI_MAX_TOKENS', process.env.OPENAI_MAX_TOKENS, '4096'),
   },
+  elevenlabs: {
+    apiKey: optionalKey('ELEVENLABS_API_KEY'), // Optional - for voice diarization
+  },
   tududi: {
     apiUrl: required('TUDUDI_API_URL'),
     apiToken: required('TUDUDI_API_TOKEN'),

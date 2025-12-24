@@ -19,6 +19,8 @@ const { KnowledgeSearchService } = require('./knowledge-search');
 const ChaosMode = require('./chaos-mode');
 const ReschedulingService = require('./rescheduling');
 const RecurringService = require('./recurring');
+const WeeklyReviewService = require('./weekly-review');
+const ElevenLabsTranscriber = require('./bot/elevenlabs-transcriber');
 
 async function main() {
   try {
@@ -103,6 +105,23 @@ async function main() {
     });
     await recurringService.initialize();
     logger.info('✅ Recurring tasks service initialized');
+
+    // Initialize weekly review service
+    const weeklyReview = new WeeklyReviewService({
+      tududuClient
+    });
+    logger.info('✅ Weekly review service initialized');
+
+    // Initialize ElevenLabs transcriber if API key is configured
+    let elevenLabsTranscriber = null;
+    if (config.elevenlabs?.apiKey) {
+      elevenLabsTranscriber = new ElevenLabsTranscriber({
+        apiKey: config.elevenlabs.apiKey
+      });
+      logger.info('✅ ElevenLabs transcriber initialized (diarization enabled)');
+    } else {
+      logger.info('ℹ️ ElevenLabs not configured, using OpenAI Whisper without diarization');
+    }
 
     const orchestrator = new MessageOrchestrator({
       taskParser,
@@ -192,17 +211,31 @@ async function main() {
     bot.onVoiceMessage(async (msg) => {
       try {
         logger.info('Received voice message');
-        await bot.sendMessage('🎤 Transcribing voice message...');
 
-        // Download and transcribe
-        const voiceFilePath = await bot.downloadVoice(msg.voice.file_id);
-        const transcription = await transcriber.transcribe(voiceFilePath);
+        // Use ElevenLabs if configured (has diarization), otherwise OpenAI Whisper
+        if (elevenLabsTranscriber && elevenLabsTranscriber.isConfigured()) {
+          await bot.sendMessage('🎤 Transcribing with speaker detection...');
+          const voiceFilePath = await bot.downloadVoice(msg.voice.file_id);
+          const result = await elevenLabsTranscriber.transcribeWithDiarization(voiceFilePath);
 
-        logger.info(`Transcription: ${transcription}`);
-        await bot.sendMessage(`📝 Transcribed: "${transcription}"\n\nProcessing...`);
+          if (result.speakerCount > 1) {
+            logger.info(`Detected ${result.speakerCount} speakers`);
+            await bot.sendMessage(`📝 *Transcription (${result.speakerCount} speakers):*\n\n${result.formatted}\n\nProcessing...`);
+          } else {
+            await bot.sendMessage(`📝 Transcribed: "${result.text}"\n\nProcessing...`);
+          }
 
-        // Process transcribed message
-        await orchestrator.handleMessage(transcription);
+          await orchestrator.handleMessage(result.text);
+        } else {
+          await bot.sendMessage('🎤 Transcribing voice message...');
+          const voiceFilePath = await bot.downloadVoice(msg.voice.file_id);
+          const transcription = await transcriber.transcribe(voiceFilePath);
+
+          logger.info(`Transcription: ${transcription}`);
+          await bot.sendMessage(`📝 Transcribed: "${transcription}"\n\nProcessing...`);
+
+          await orchestrator.handleMessage(transcription);
+        }
       } catch (error) {
         logger.error(`Voice processing error: ${error.message}`);
         await bot.sendMessage('❌ Failed to process voice message');
@@ -221,6 +254,7 @@ async function main() {
         '/normal - Disable chaos mode\n' +
         '/reschedule - View and reschedule overdue tasks\n' +
         '/recurring - View registered recurring tasks\n' +
+        '/review - Weekly productivity summary\n' +
         '/status - Show system status'
       );
     });
@@ -361,6 +395,17 @@ async function main() {
       } catch (error) {
         logger.error(`Recurring command failed: ${error.message}`);
         await bot.sendMessage(`❌ Failed to get recurring tasks: ${error.message}`);
+      }
+    });
+
+    // Weekly review command handler
+    bot.onCommand('review', async (msg) => {
+      try {
+        const review = await weeklyReview.generateReview();
+        await bot.sendMessage(review.formatted);
+      } catch (error) {
+        logger.error(`Review command failed: ${error.message}`);
+        await bot.sendMessage(`❌ Failed to generate review: ${error.message}`);
       }
     });
 
