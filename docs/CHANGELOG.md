@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-12-24
+
+### Added
+- **Smart Rescheduling**: `/reschedule` command shows overdue tasks with suggested new dates
+- Priority-based suggestion algorithm (urgent=today, high=tomorrow, medium=3 days, low=1 week)
+- Inline keyboard for individual or bulk rescheduling
+
+### Files Added
+- `src/rescheduling/index.js` - ReschedulingService
+- `tests/rescheduling/rescheduling.test.js` - 11 tests
+
+### Files Modified
+- `src/index.js` - Added /reschedule command and callback handler
+
+### Reference
+- Session: ab7590e3-070b-4a85-a0d8-eeea4f9edb3f
+
 ## [1.3.0] - 2025-12-24
 
 ### Added

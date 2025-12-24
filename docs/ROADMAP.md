@@ -6,7 +6,7 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 ## Planned Features
 ### High Priority
 ### High Priority
-- [ ] **Smart Rescheduling**: Auto-suggest new times for overdue tasks using historical duration data.
+- [x] **Smart Rescheduling**: `/reschedule` command with priority-based suggestions ✅
 - [ ] **Recurring Tasks**: Native support for repeating tasks (daily, weekly, custom) synced to Tududi.
 
 

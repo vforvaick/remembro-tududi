@@ -17,6 +17,7 @@ const PlanCommand = require('./commands/plan-command');
 const { ArticleParser } = require('./article-parser');
 const { KnowledgeSearchService } = require('./knowledge-search');
 const ChaosMode = require('./chaos-mode');
+const ReschedulingService = require('./rescheduling');
 
 async function main() {
   try {
@@ -86,6 +87,13 @@ async function main() {
     // Initialize chaos mode service
     const chaosMode = new ChaosMode();
     logger.info('✅ Chaos mode service initialized');
+
+    // Initialize rescheduling service
+    const rescheduler = new ReschedulingService({
+      tududuClient,
+      bot
+    });
+    logger.info('✅ Rescheduling service initialized');
 
     const orchestrator = new MessageOrchestrator({
       taskParser,
@@ -191,6 +199,7 @@ async function main() {
         '/plan - Generate daily plan\n' +
         '/chaos - Enable chaos mode\n' +
         '/normal - Disable chaos mode\n' +
+        '/reschedule - View and reschedule overdue tasks\n' +
         '/status - Show system status'
       );
     });
@@ -284,6 +293,24 @@ async function main() {
       } catch (error) {
         logger.error(`Normal mode restoration failed: ${error.message}`);
         await bot.sendMessage(`❌ Failed to restore normal mode: ${error.message}`);
+      }
+    });
+
+    // Reschedule command handler
+    bot.onCommand('reschedule', async (msg) => {
+      try {
+        const overdueWithSuggestions = await rescheduler.getOverdueWithSuggestions();
+        const message = rescheduler.formatOverdueMessage(overdueWithSuggestions);
+
+        if (overdueWithSuggestions.length > 0) {
+          const keyboard = rescheduler.buildRescheduleKeyboard(overdueWithSuggestions);
+          await bot.sendMessage(message, { reply_markup: keyboard });
+        } else {
+          await bot.sendMessage(message);
+        }
+      } catch (error) {
+        logger.error(`Reschedule command failed: ${error.message}`);
+        await bot.sendMessage(`❌ Failed to check overdue tasks: ${error.message}`);
       }
     });
 
@@ -398,6 +425,38 @@ async function main() {
         }
       } else if (data === 'skip_article') {
         await bot.sendMessage('⏭️ Article skipped');
+      } else if (data.startsWith('reschedule:')) {
+        // Handle reschedule callback
+        try {
+          const parts = data.split(':');
+          const action = parts[1];
+
+          if (action === 'dismiss') {
+            await bot.sendMessage('👍 Overdue tasks dismissed. Use /reschedule to view them again.');
+          } else if (action === 'all') {
+            // Reschedule all overdue tasks
+            const overdueWithSuggestions = await rescheduler.getOverdueWithSuggestions();
+            let rescheduled = 0;
+            for (const task of overdueWithSuggestions) {
+              try {
+                await rescheduler.applyReschedule(task.id, task.suggestion.suggestedDate);
+                rescheduled++;
+              } catch (e) {
+                logger.error(`Failed to reschedule task ${task.id}: ${e.message}`);
+              }
+            }
+            await bot.sendMessage(`✅ Rescheduled ${rescheduled} task${rescheduled !== 1 ? 's' : ''}!`);
+          } else {
+            // Reschedule single task
+            const taskId = action;
+            const newDate = parts[2];
+            await rescheduler.applyReschedule(taskId, newDate);
+            await bot.sendMessage(`✅ Task rescheduled to ${newDate}`);
+          }
+        } catch (error) {
+          logger.error(`Reschedule callback failed: ${error.message}`);
+          await bot.sendMessage(`❌ Reschedule failed: ${error.message}`);
+        }
       }
     });
 
