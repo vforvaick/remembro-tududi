@@ -31,6 +31,18 @@ Remembro-Tududi is an orchestration layer that connects:
 - **File Manager:** Manipulates local markdown files.
 - **Sync Watcher:** Uses `chokidar` to listen for file changes in Obsidian vault to push back to system.
 
+### 6. Value-Add Services
+- **Smart Rescheduling (`src/rescheduling`):** Priority-based algorithm for overdue tasks.
+- **Recurring Tasks (`src/recurring`):** Pattern-based generation (daily/weekly/monthly).
+- **Weekly Review (`src/weekly-review`):** Productivity stats and summary.
+- **Knowledge Search (`src/knowledge-search`):** Semantic search over Obsidian vault.
+- **Calendar Service (`src/calendar`):** Integration with Google Calendar API.
+- **Chaos Mode (`src/chaos-mode`):** Task filtering for focus.
+
+### 7. External Integrations
+- **ElevenLabs:** Speaker diarization for multi-user voice notes.
+- **Google Calendar:** Read events for daily planning.
+
 ## Data Flow
 ```mermaid
 graph TD
