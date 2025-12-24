@@ -5,10 +5,14 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 
 ## Planned Features
 ### High Priority
-*No high priority items at this time.*
+### High Priority
+- [ ] **Smart Rescheduling**: Auto-suggest new times for overdue tasks using historical duration data.
+- [ ] **Recurring Tasks**: Native support for repeating tasks (daily, weekly, custom) synced to Tududi.
+
 
 ### Medium Priority
-*No medium priority items at this time.*
+- [ ] **Weekly Review Dashboard**: A summary of completed tasks, productivity stats, and goals for the next week.
+- [ ] **Voice Memo Diarization**: Support for distinguishing speakers in multi-user voice notes.
 
 ## Known Issues
 *No critical issues at this time.*
