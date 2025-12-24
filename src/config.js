@@ -105,6 +105,10 @@ module.exports = {
     vaultPath: required('OBSIDIAN_VAULT_PATH'),
     dailyNotesPath: optional('OBSIDIAN_DAILY_NOTES_PATH', 'Daily Notes'),
   },
+  googleCalendar: {
+    keyFilePath: process.env.GOOGLE_CALENDAR_KEY_FILE || null,
+    calendarId: optional('GOOGLE_CALENDAR_ID', 'primary')
+  },
   googleSheetId: optionalKey('GOOGLE_SHEETS_ID'),
   timezone: optional('TIMEZONE', 'Asia/Jakarta'),
   port: parseInteger('PORT', process.env.PORT, '3001'),

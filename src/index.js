@@ -21,6 +21,7 @@ const ReschedulingService = require('./rescheduling');
 const RecurringService = require('./recurring');
 const WeeklyReviewService = require('./weekly-review');
 const ElevenLabsTranscriber = require('./bot/elevenlabs-transcriber');
+const GoogleCalendarService = require('./calendar/google-calendar');
 
 async function main() {
   try {
@@ -122,6 +123,13 @@ async function main() {
     } else {
       logger.info('ℹ️ ElevenLabs not configured, using OpenAI Whisper without diarization');
     }
+
+    // Initialize Google Calendar service
+    const calendarService = new GoogleCalendarService({
+      keyFilePath: config.googleCalendar?.keyFilePath,
+      calendarId: config.googleCalendar?.calendarId
+    });
+    await calendarService.initialize();
 
     const orchestrator = new MessageOrchestrator({
       taskParser,
@@ -255,7 +263,9 @@ async function main() {
         '/reschedule - View and reschedule overdue tasks\n' +
         '/recurring - View registered recurring tasks\n' +
         '/review - Weekly productivity summary\n' +
-        '/status - Show system status'
+        '/status - Show system status\\n' +
+        '/today - Today\\'s calendar events\\n' +
+        '/calendar - Upcoming events'
       );
     });
 
@@ -406,6 +416,39 @@ async function main() {
       } catch (error) {
         logger.error(`Review command failed: ${error.message}`);
         await bot.sendMessage(`❌ Failed to generate review: ${error.message}`);
+      }
+    });
+
+    // Today's calendar command handler
+    bot.onCommand('today', async (msg) => {
+      try {
+        if (!calendarService.isConfigured()) {
+          await bot.sendMessage('📅 Google Calendar not configured.\n\n_Set up with GOOGLE_CALENDAR_KEY_FILE in .env_');
+          return;
+        }
+        const message = await calendarService.formatTodayMessage();
+        await bot.sendMessage(message);
+      } catch (error) {
+        logger.error(`Today command failed: ${error.message}`);
+        await bot.sendMessage(`❌ Failed to get calendar: ${error.message}`);
+      }
+    });
+
+    // Upcoming calendar command handler
+    bot.onCommand('calendar', async (msg) => {
+      try {
+        if (!calendarService.isConfigured()) {
+          await bot.sendMessage('📅 Google Calendar not configured.\n\n_Set up with GOOGLE_CALENDAR_KEY_FILE in .env_');
+          return;
+        }
+        const commandText = msg.text || '/calendar';
+        const daysArg = commandText.replace('/calendar', '').trim();
+        const days = parseInt(daysArg, 10) || 7;
+        const message = await calendarService.formatUpcomingMessage(days);
+        await bot.sendMessage(message);
+      } catch (error) {
+        logger.error(`Calendar command failed: ${error.message}`);
+        await bot.sendMessage(`❌ Failed to get calendar: ${error.message}`);
       }
     });
 

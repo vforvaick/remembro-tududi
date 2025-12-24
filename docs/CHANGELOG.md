@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2025-12-24
+
+### Added
+- **Google Calendar Integration**: `/today` and `/calendar` commands
+- Service Account authentication for Google Calendar API
+- Event formatting with time, location, grouped by date
+- Setup guide: `docs/CALENDAR_SETUP.md`
+
+### Files Added
+- `src/calendar/google-calendar.js` - GoogleCalendarService
+- `tests/calendar/google-calendar.test.js` - 6 tests
+- `docs/CALENDAR_SETUP.md` - Step-by-step setup guide
+
+### Files Modified
+- `src/config.js` - Added googleCalendar config
+- `src/index.js` - Added /today and /calendar commands
+- `.env.example` - Added GOOGLE_CALENDAR_KEY_FILE
+
+### Reference
+- Session: ab7590e3-070b-4a85-a0d8-eeea4f9edb3f
+
 ## [1.6.0] - 2025-12-24
 
 ### Added
