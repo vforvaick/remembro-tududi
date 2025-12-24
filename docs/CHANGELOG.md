@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-12-24
+
+### Added
+- **Recurring Tasks**: Native support for repeating tasks (daily/weekly/monthly)
+- `/recurring` command to view registered recurring tasks
+- Pattern detection: "every day", "weekly", "every Monday", "monthly on the 15th"
+- Auto-generation of next instance when task is completed
+- Daily cron job (7 AM) to check for due recurring tasks
+
+### Files Added
+- `src/recurring/index.js` - RecurringService with JSON storage
+- `tests/recurring/recurring.test.js` - 15 tests
+
+### Files Modified
+- `src/index.js` - Added /recurring command, cron job, and task completion hook
+
+### Reference
+- Session: ab7590e3-070b-4a85-a0d8-eeea4f9edb3f
+
 ## [1.4.0] - 2025-12-24
 
 ### Added

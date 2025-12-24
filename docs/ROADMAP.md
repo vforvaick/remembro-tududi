@@ -7,7 +7,7 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 ### High Priority
 ### High Priority
 - [x] **Smart Rescheduling**: `/reschedule` command with priority-based suggestions ✅
-- [ ] **Recurring Tasks**: Native support for repeating tasks (daily, weekly, custom) synced to Tududi.
+- [x] **Recurring Tasks**: `/recurring` command with daily/weekly/monthly patterns ✅
 
 
 ### Medium Priority

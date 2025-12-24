@@ -18,6 +18,7 @@ const { ArticleParser } = require('./article-parser');
 const { KnowledgeSearchService } = require('./knowledge-search');
 const ChaosMode = require('./chaos-mode');
 const ReschedulingService = require('./rescheduling');
+const RecurringService = require('./recurring');
 
 async function main() {
   try {
@@ -95,6 +96,14 @@ async function main() {
     });
     logger.info('✅ Rescheduling service initialized');
 
+    // Initialize recurring tasks service
+    const recurringService = new RecurringService({
+      tududuClient,
+      storagePath: '.cache/recurring-tasks.json'
+    });
+    await recurringService.initialize();
+    logger.info('✅ Recurring tasks service initialized');
+
     const orchestrator = new MessageOrchestrator({
       taskParser,
       tududuClient,
@@ -116,6 +125,17 @@ async function main() {
         await tududuClient.updateTask(change.taskId, {
           completed: change.completed
         });
+
+        // If task completed and it's recurring, generate next instance
+        if (change.completed) {
+          const nextTask = await recurringService.generateNextInstance(change.taskId);
+          if (nextTask) {
+            await bot.sendMessage(
+              `🔁 Recurring task completed! Next instance created:\n` +
+              `*${nextTask.name}* - due ${nextTask.due_date}`
+            );
+          }
+        }
       } catch (error) {
         logger.error(`Failed to sync task completion: ${error.message}`);
       }
@@ -200,6 +220,7 @@ async function main() {
         '/chaos - Enable chaos mode\n' +
         '/normal - Disable chaos mode\n' +
         '/reschedule - View and reschedule overdue tasks\n' +
+        '/recurring - View registered recurring tasks\n' +
         '/status - Show system status'
       );
     });
@@ -311,6 +332,35 @@ async function main() {
       } catch (error) {
         logger.error(`Reschedule command failed: ${error.message}`);
         await bot.sendMessage(`❌ Failed to check overdue tasks: ${error.message}`);
+      }
+    });
+
+    // Recurring tasks command handler
+    bot.onCommand('recurring', async (msg) => {
+      try {
+        const recurring = recurringService.getAll();
+
+        if (recurring.length === 0) {
+          await bot.sendMessage(
+            '🔁 *No recurring tasks registered*\n\n' +
+            '_Create a task with phrases like "every day", "weekly", or "every Monday" to make it recurring._'
+          );
+          return;
+        }
+
+        let message = `🔁 *${recurring.length} Recurring Task${recurring.length > 1 ? 's' : ''}*\n\n`;
+
+        recurring.forEach((r, i) => {
+          const pattern = recurringService.formatPattern(r.pattern);
+          message += `${i + 1}. *${r.template.name || r.template.title}*\n`;
+          message += `   📅 ${pattern}\n`;
+          message += `   🕗 Last: ${r.lastGenerated.split('T')[0]}\n\n`;
+        });
+
+        await bot.sendMessage(message);
+      } catch (error) {
+        logger.error(`Recurring command failed: ${error.message}`);
+        await bot.sendMessage(`❌ Failed to get recurring tasks: ${error.message}`);
       }
     });
 
@@ -484,6 +534,23 @@ async function main() {
       }
     });
     logger.info('📅 Scheduled daily plan generation at 08:00');
+
+    // Schedule daily recurring task check (7 AM, before daily plan)
+    schedule.scheduleJob('0 7 * * *', async () => {
+      try {
+        logger.info('🔁 Checking for due recurring tasks...');
+        const generated = await recurringService.checkAndGenerate();
+        if (generated.length > 0) {
+          const taskList = generated.map(t => `• ${t.name}`).join('\n');
+          await bot.sendMessage(
+            `🔁 *${generated.length} Recurring Task${generated.length > 1 ? 's' : ''} Generated*\n\n${taskList}`
+          );
+        }
+      } catch (error) {
+        logger.error(`Recurring task check failed: ${error.message}`);
+      }
+    });
+    logger.info('🔁 Scheduled recurring task check at 07:00');
 
     logger.info('System started successfully! 🚀');
     logger.info('Bot is now listening for messages...');
