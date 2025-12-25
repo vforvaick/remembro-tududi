@@ -38,10 +38,13 @@ Remembro-Tududi is an orchestration layer that connects:
 - **Knowledge Search (`src/knowledge-search`):** Semantic search over Obsidian vault.
 - **Calendar Service (`src/calendar`):** Integration with Google Calendar API.
 - **Chaos Mode (`src/chaos-mode`):** Task filtering for focus.
+- **Shift Schedule (`src/shift-schedule`):** Fetch work shifts from Google Sheets and sync to Calendar.
 
 ### 7. External Integrations
 - **ElevenLabs:** Speaker diarization for multi-user voice notes.
-- **Google Calendar:** Read events for daily planning.
+- **ElevenLabs:** Speaker diarization for multi-user voice notes.
+- **Google Calendar:** Read/Write events and sync shifts.
+- **Google Sheets:** Read public shift schedule CSV data.
 
 ## Data Flow
 ```mermaid

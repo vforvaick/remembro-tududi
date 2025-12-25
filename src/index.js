@@ -13,7 +13,13 @@ const TududuClient = require('./tududi/client');
 const ObsidianFileManager = require('./obsidian/file-manager');
 const ObsidianSyncWatcher = require('./obsidian/sync-watcher');
 const MessageOrchestrator = require('./orchestrator');
-const { initializeShiftSchedule } = require('./shift-schedule');
+const {
+  initializeShiftSchedule,
+  formatTodayShiftMessage,
+  formatWeekShiftMessage,
+  refreshShiftData,
+  syncShiftsToCalendar
+} = require('./shift-schedule');
 const PlanCommand = require('./commands/plan-command');
 const { ArticleParser } = require('./article-parser');
 const { KnowledgeSearchService } = require('./knowledge-search');
@@ -55,12 +61,14 @@ async function main() {
 
     const dailyPlanner = new DailyPlanner(llmClient, tududuClient);
 
-    // Initialize shift schedule if Google Sheets ID is configured
+    // Initialize shift schedule if configured
     let shiftSchedule = null;
-    if (config.googleSheetId) {
+    const sheetId = config.shiftSchedule?.spreadsheetId || config.googleSheetId;
+    if (sheetId) {
       try {
         shiftSchedule = await initializeShiftSchedule({
-          googleSheetId: config.googleSheetId,
+          googleSheetId: sheetId,
+          userName: config.shiftSchedule?.userName,
           shiftDataPath: '.cache/shifts.json',
           autoFetch: true
         });
@@ -260,6 +268,7 @@ async function main() {
         '**Commands:**\n' +
         '/help - Show help\n' +
         '/plan - Generate daily plan\n' +
+        '/shift - View work shift schedule\n' +
         '/chaos - Enable chaos mode\n' +
         '/normal - Disable chaos mode\n' +
         '/reschedule - View and reschedule overdue tasks\n' +
@@ -452,6 +461,58 @@ async function main() {
       } catch (error) {
         logger.error(`Calendar command failed: ${error.message}`);
         await bot.sendMessage(`❌ Failed to get calendar: ${error.message}`);
+      }
+    });
+
+    // Shift schedule command handler
+    bot.onCommand('shift', async (msg) => {
+      try {
+        if (!shiftSchedule) {
+          await bot.sendMessage('⏰ Shift schedule not configured.\n\n_Set up with SHIFT_SPREADSHEET_ID in .env_');
+          return;
+        }
+
+        const commandText = msg.text || '/shift';
+        const subCommand = commandText.replace('/shift', '').trim().toLowerCase();
+
+        if (subCommand === 'week') {
+          // Show this week's shifts
+          const message = await formatWeekShiftMessage(shiftSchedule.manager, shiftSchedule.parser);
+          await bot.sendMessage(message);
+        } else if (subCommand === 'sync') {
+          // Sync shifts to Google Calendar
+          if (!calendarService.isConfigured()) {
+            await bot.sendMessage('📅 Google Calendar not configured.\n\n_Set up with GOOGLE_CALENDAR_KEY_FILE in .env to enable sync._');
+            return;
+          }
+          await bot.sendMessage('🔄 Syncing shifts to Google Calendar...');
+          const result = await syncShiftsToCalendar(calendarService, shiftSchedule.manager, shiftSchedule.parser);
+          await bot.sendMessage(
+            `✅ *Calendar Sync Complete*\n\n` +
+            `📅 Created: ${result.created} events\n` +
+            `⏭️ Skipped: ${result.skipped} (off days)\n` +
+            `❌ Errors: ${result.errors}`
+          );
+        } else if (subCommand === 'refresh') {
+          // Force refresh shift data from Google Sheets
+          await bot.sendMessage('🔄 Refreshing shift data from Google Sheets...');
+          await refreshShiftData(shiftSchedule);
+          const data = await shiftSchedule.manager.getShiftData();
+          await bot.sendMessage(
+            `✅ *Shift Data Refreshed*\n\n` +
+            `📅 Month: ${data.monthLabel || 'Unknown'}\n` +
+            `👤 User: ${data.userName || 'Unknown'}\n` +
+            `📊 Shifts: ${data.shifts?.length || 0} days\n` +
+            `🕐 Updated: ${new Date().toLocaleTimeString('id-ID')}`
+          );
+        } else {
+          // Default: show today's shift
+          const message = await formatTodayShiftMessage(shiftSchedule.manager, shiftSchedule.parser);
+          await bot.sendMessage(message);
+        }
+      } catch (error) {
+        logger.error(`Shift command failed: ${error.message}`);
+        await bot.sendMessage(`❌ Failed to get shift schedule: ${error.message}`);
       }
     });
 

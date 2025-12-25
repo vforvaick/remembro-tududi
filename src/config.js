@@ -109,7 +109,13 @@ module.exports = {
     keyFilePath: process.env.GOOGLE_CALENDAR_KEY_FILE || null,
     calendarId: optional('GOOGLE_CALENDAR_ID', 'primary')
   },
-  googleSheetId: optionalKey('GOOGLE_SHEETS_ID'),
+  shiftSchedule: {
+    spreadsheetId: optionalKey('SHIFT_SPREADSHEET_ID'),
+    userName: optional('SHIFT_USER_NAME', 'AHMAD FAIQ NAUFAL'),
+    refreshHours: parseInteger('SHIFT_REFRESH_HOURS', process.env.SHIFT_REFRESH_HOURS, '6')
+  },
+  // Deprecated: use shiftSchedule.spreadsheetId instead
+  googleSheetId: optionalKey('SHIFT_SPREADSHEET_ID') || optionalKey('GOOGLE_SHEETS_ID'),
   timezone: optional('TIMEZONE', 'Asia/Jakarta'),
   port: parseInteger('PORT', process.env.PORT, '3001'),
 };

@@ -18,9 +18,17 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 
 ### Completed Today
 - [x] **Calendar Integration**: `/today` and `/calendar` commands with Google Calendar ✅
+- [x] **Calendar Integration**: `/today` and `/calendar` commands with Google Calendar ✅
 - [x] **Calendar Event Creation**: `/schedule` command with natural language parsing ✅
+- [x] **Shift Schedule**: `/shift` command, dynamic GID discovery, Calendar sync ✅
 
 ### Backlog
+- [ ] **People Context / Contact Intelligence**: Parse names from tasks and build a people knowledge base
+  - AI extracts person names from messages (e.g., "submit report to Pak Egi")
+  - Bot asks "Who is Pak Egi?" when encountering new names
+  - Store relationship info: role, hierarchy, preferences (e.g., "Department Head, 2 levels above me")
+  - Storage options: Obsidian markdown files (`People/pak-egi.md`) or JSON database
+  - Future: Auto-suggest best times to contact, communication preferences, delegation patterns
 - [ ] **Photo-to-Tasks**: Send photo of whiteboard/notebook → AI extracts tasks (Gemini Vision)
 - [ ] **Gamification**: XP, streaks, level-up messages for dopamine-friendly task management
 - [ ] **Proactive Coaching**: Bot check-ins when idle

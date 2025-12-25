@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2025-12-25
+
+### Added
+- **Dynamic GID Discovery**: Shift schedule now automatically discovers sheet tabs and GIDs from Google Sheets HTML, making it robust for future months without config updates
+- **`/shift` Command**: New Telegram command with subcommands:
+  - `/shift` - Show today's shift
+  - `/shift week` - Show this week's shifts
+  - `/shift sync` - Sync shifts to Google Calendar
+  - `/shift refresh` - Force refresh from Google Sheets
+- **Google Calendar Sync**: Shifts can be synced to Google Calendar as events
+- **All Shift Codes**: Support for IS (Izin Sakit), Lib, PJ, CT, BL, T, 0-3
+- **Shift 2 Special Dates**: Automatic detection of special timing (14:00-23:00) for tanggal 1, 2, 24, and 2 days before month end
+
+### Changed
+- `google-sheets-fetcher.js`: Complete rewrite with dynamic GID discovery, HTML parsing, 24-hour caching
+- `shift-parser.js`: Added comprehensive shift code definitions and special date detection
+- `index.js` (shift-schedule): Added calendar sync and Telegram formatting helpers
+
+### Files Modified
+- `src/shift-schedule/google-sheets-fetcher.js`
+- `src/shift-schedule/shift-parser.js`
+- `src/shift-schedule/index.js`
+- `src/config.js` - Added shiftSchedule config section
+- `src/index.js` - Added /shift command handler
+- `.env.example` - Added SHIFT_* config variables
+- `tests/shift-schedule/*.test.js` - Updated for new API (42 tests)
+
+### Reference
+- Session: dd5c3d40-6e72-4f50-833a-d93be69077b9
+
+---
+
 ## [1.7.1] - 2025-12-25
 
 ### Changed
