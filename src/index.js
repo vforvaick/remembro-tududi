@@ -7,6 +7,7 @@ const TelegramBot = require('./bot/telegram-bot');
 const VoiceTranscriber = require('./bot/voice-transcriber');
 const LLMClient = require('./llm/llm-client');
 const TaskParser = require('./llm/task-parser');
+const EventParser = require('./llm/event-parser');
 const DailyPlanner = require('./llm/daily-planner');
 const TududuClient = require('./tududi/client');
 const ObsidianFileManager = require('./obsidian/file-manager');
@@ -40,6 +41,7 @@ async function main() {
     const llmClient = new LLMClient(config);
 
     const taskParser = new TaskParser(llmClient);
+    const eventParser = new EventParser(llmClient);
 
     const tududuClient = new TududuClient({
       apiUrl: config.tududi.apiUrl,
@@ -265,7 +267,8 @@ async function main() {
         '/review - Weekly productivity summary\n' +
         '/status - Show system status\n' +
         '/today - Today\'s calendar events\n' +
-        '/calendar - Upcoming events'
+        '/calendar - Upcoming events\n' +
+        '/schedule - Create a new event'
       );
     });
 
@@ -449,6 +452,54 @@ async function main() {
       } catch (error) {
         logger.error(`Calendar command failed: ${error.message}`);
         await bot.sendMessage(`❌ Failed to get calendar: ${error.message}`);
+      }
+    });
+
+    // Schedule event command handler
+    bot.onCommand('schedule', async (msg) => {
+      try {
+        if (!calendarService.isConfigured()) {
+          await bot.sendMessage('📅 Google Calendar not configured.\n\n_Set up with GOOGLE_CALENDAR_KEY_FILE in .env_');
+          return;
+        }
+
+        const commandText = msg.text || '/schedule';
+        const eventText = commandText.replace('/schedule', '').trim();
+
+        if (!eventText) {
+          await bot.sendMessage('❓ Please describe the event.\n\n*Example:* /schedule Meeting with John tomorrow at 2pm');
+          return;
+        }
+
+        await bot.sendMessage('🤔 Parsing event details...');
+
+        try {
+          const eventDetails = await eventParser.parseEvent(eventText);
+
+          const createdEvent = await calendarService.createEvent(eventDetails);
+
+          // Helper to format date based on whether it is a full ISO string (dateTime) or just date (date)
+          const date = new Date(createdEvent.start.dateTime || createdEvent.start.date).toLocaleDateString('id-ID', {
+            weekday: 'short', day: 'numeric', month: 'short'
+          });
+
+          // Helper to format time
+          const time = calendarService.formatEventTime(createdEvent);
+
+          await bot.sendMessage(
+            `✅ *Event Created!*\n\n` +
+            `📝 *${createdEvent.summary}*\n` +
+            `📅 ${date}\n` +
+            `⏰ ${time}\n` +
+            (createdEvent.location ? `📍 ${createdEvent.location}` : '')
+          );
+        } catch (parseError) {
+          await bot.sendMessage(`❌ Failed to create event: ${parseError.message}`);
+        }
+
+      } catch (error) {
+        logger.error(`Schedule command failed: ${error.message}`);
+        await bot.sendMessage(`❌ Schedule command failed: ${error.message}`);
       }
     });
 

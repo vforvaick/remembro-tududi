@@ -73,4 +73,49 @@ describe('GoogleCalendarService', () => {
             expect(message).toContain('Room A');
         });
     });
+
+    describe('createEvent', () => {
+        let service;
+
+        beforeEach(() => {
+            service = new GoogleCalendarService({});
+            service.configured = true;
+            service.calendar = {
+                events: {
+                    insert: jest.fn()
+                }
+            };
+            service.calendarId = 'primary';
+        });
+
+        it('should throw if not configured', async () => {
+            service.configured = false;
+            await expect(service.createEvent({})).rejects.toThrow('not configured');
+        });
+
+        it('should insert event with correct parameters', async () => {
+            const eventDetails = {
+                summary: 'Test Event',
+                startTime: new Date('2025-12-25T10:00:00Z'),
+                endTime: new Date('2025-12-25T11:00:00Z'),
+                location: 'Home',
+                description: 'Test'
+            };
+
+            service.calendar.events.insert.mockResolvedValue({ data: { id: '123' } });
+
+            await service.createEvent(eventDetails);
+
+            expect(service.calendar.events.insert).toHaveBeenCalledWith(expect.objectContaining({
+                calendarId: 'primary',
+                resource: expect.objectContaining({
+                    summary: 'Test Event',
+                    location: 'Home',
+                    description: 'Test',
+                    start: expect.objectContaining({ dateTime: expect.any(String) }),
+                    end: expect.objectContaining({ dateTime: expect.any(String) })
+                })
+            }));
+        });
+    });
 });

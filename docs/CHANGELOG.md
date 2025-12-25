@@ -24,6 +24,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.0] - 2025-12-25
+
+### Added
+- **Calendar Event Creation**: `/schedule` command
+- Natural language parsing for events (e.g. "Meeting tomorrow at 3pm")
+- Event creation via Google Calendar API (requires write scope)
+- `EventParser` service using LLM
+
+### Files Added
+- `src/llm/event-parser.js`
+- `tests/llm/event-parser.test.js`
+
+### Files Modified
+- `src/calendar/google-calendar.js` - Added `createEvent`, updated scope
+- `src/index.js` - Added `/schedule` command and `EventParser` initialization
+
+### Reference
+- Session: ab7590e3-070b-4a85-a0d8-eeea4f9edb3f
+
 ## [1.7.0] - 2025-12-24
 
 ### Added

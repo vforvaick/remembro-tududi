@@ -27,7 +27,7 @@ class GoogleCalendarService {
         try {
             const auth = new google.auth.GoogleAuth({
                 keyFile: this.keyFilePath,
-                scopes: ['https://www.googleapis.com/auth/calendar.readonly']
+                scopes: ['https://www.googleapis.com/auth/calendar']
             });
 
             this.calendar = google.calendar({ version: 'v3', auth });
@@ -102,6 +102,49 @@ class GoogleCalendarService {
             return response.data.items || [];
         } catch (error) {
             logger.error(`Failed to get upcoming events: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Create a new calendar event
+     * @param {Object} eventDetails - Event details
+     * @param {string} eventDetails.summary - Event title
+     * @param {Date} eventDetails.startTime - Start time
+     * @param {Date} eventDetails.endTime - End time
+     * @param {string} [eventDetails.location] - Event location
+     * @param {string} [eventDetails.description] - Event description
+     * @returns {Promise<Object>} Created event
+     */
+    async createEvent({ summary, startTime, endTime, location, description }) {
+        if (!this.configured) {
+            throw new Error('Google Calendar not configured');
+        }
+
+        try {
+            const event = {
+                summary,
+                start: {
+                    dateTime: startTime.toISOString(),
+                    timeZone: 'Asia/Jakarta'
+                },
+                end: {
+                    dateTime: endTime.toISOString(),
+                    timeZone: 'Asia/Jakarta'
+                },
+                location,
+                description
+            };
+
+            const response = await this.calendar.events.insert({
+                calendarId: this.calendarId,
+                resource: event
+            });
+
+            logger.info(`📅 Created calendar event: ${summary}`);
+            return response.data;
+        } catch (error) {
+            logger.error(`Failed to create calendar event: ${error.message}`);
             throw error;
         }
     }
