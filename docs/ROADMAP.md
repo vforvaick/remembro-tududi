@@ -18,12 +18,12 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 
 ### Completed Today
 - [x] **Calendar Integration**: `/today` and `/calendar` commands with Google Calendar ✅
+- [x] **Calendar Event Creation**: `/schedule` command with natural language parsing ✅
 
 ### Backlog
 - [ ] **Photo-to-Tasks**: Send photo of whiteboard/notebook → AI extracts tasks (Gemini Vision)
 - [ ] **Gamification**: XP, streaks, level-up messages for dopamine-friendly task management
 - [ ] **Proactive Coaching**: Bot check-ins when idle
-- [ ] **Calendar: Add Events**: Natural language event creation ("meeting tomorrow at 3pm")
 - [ ] **Calendar: Conflict Detection**: Warn when scheduling tasks during busy times
 - [ ] **Calendar: Microsoft Support**: Add Microsoft Graph API for Teams/Outlook
 
