@@ -8,7 +8,7 @@ const logger = require('../utils/logger');
 
 class WeeklyReviewService {
     constructor(dependencies) {
-        this.tududuClient = dependencies.tududuClient;
+        this.tududiClient = dependencies.tududiClient;
     }
 
     /**
@@ -18,7 +18,7 @@ class WeeklyReviewService {
      */
     async getCompletedTasks(days = 7) {
         try {
-            const allTasks = await this.tududuClient.getTasks({ completed: true });
+            const allTasks = await this.tududiClient.getTasks({ completed: true });
 
             const cutoffDate = new Date();
             cutoffDate.setDate(cutoffDate.getDate() - days);

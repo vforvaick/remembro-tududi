@@ -2,11 +2,11 @@ const ReschedulingService = require('../../src/rescheduling');
 
 describe('ReschedulingService', () => {
     let rescheduler;
-    let mockTududuClient;
+    let mockTududiClient;
     let mockBot;
 
     beforeEach(() => {
-        mockTududuClient = {
+        mockTududiClient = {
             getTasks: jest.fn(),
             updateTask: jest.fn()
         };
@@ -14,7 +14,7 @@ describe('ReschedulingService', () => {
             sendMessage: jest.fn()
         };
         rescheduler = new ReschedulingService({
-            tududuClient: mockTududuClient,
+            tududiClient: mockTududiClient,
             bot: mockBot
         });
     });
@@ -27,7 +27,7 @@ describe('ReschedulingService', () => {
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
 
-            mockTududuClient.getTasks.mockResolvedValue([
+            mockTududiClient.getTasks.mockResolvedValue([
                 { id: '1', name: 'Overdue task', due_date: yesterday.toISOString().split('T')[0] },
                 { id: '2', name: 'Future task', due_date: tomorrow.toISOString().split('T')[0] },
                 { id: '3', name: 'No due date task', due_date: null }
@@ -40,7 +40,7 @@ describe('ReschedulingService', () => {
         });
 
         it('should return empty array when no overdue tasks', async () => {
-            mockTududuClient.getTasks.mockResolvedValue([
+            mockTududiClient.getTasks.mockResolvedValue([
                 { id: '1', name: 'Future task', due_date: '2099-12-31' }
             ]);
 
@@ -89,11 +89,11 @@ describe('ReschedulingService', () => {
 
     describe('applyReschedule', () => {
         it('should update task with new due date', async () => {
-            mockTududuClient.updateTask.mockResolvedValue({ id: '1', due_date: '2025-12-25' });
+            mockTududiClient.updateTask.mockResolvedValue({ id: '1', due_date: '2025-12-25' });
 
             await rescheduler.applyReschedule('1', '2025-12-25');
 
-            expect(mockTududuClient.updateTask).toHaveBeenCalledWith('1', { due_date: '2025-12-25' });
+            expect(mockTududiClient.updateTask).toHaveBeenCalledWith('1', { due_date: '2025-12-25' });
         });
     });
 

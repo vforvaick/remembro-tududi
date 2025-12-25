@@ -1,11 +1,17 @@
-# 🧠 Remembro-Tududi
+# 🧠 Remembro
 
-> **AI-Powered ADHD Task Management System**  
-> Zero-friction task capture and AI-powered planning for ADHD users.
+> **AI-Powered Personal Organizer**  
+> Zero-friction capture and intelligent orchestration for task management, knowledge building, and scheduling.
 
 ```
-💭 Brain Dump → 🤖 AI Processing → ✅ Structured Tasks + 📚 Knowledge Base
+💭 Brain Dump → 🤖 AI Processing → ✅ Tasks + 📚 Knowledge + 📅 Calendar
 ```
+
+**Remembro** is the "brain" that connects:
+- 🎯 **Tududi** — Task Management Engine
+- 📚 **Obsidian** — Knowledge Base
+- 📅 **Google Calendar** — Scheduling
+- ⏰ **Shift Schedule** — Work Shifts from Google Sheets
 
 ---
 
@@ -34,7 +40,7 @@
 
 ---
 
-## 🔄 A Day with Tududi
+## 🔄 A Day with Remembro
 
 This is how the system fits into your daily life:
 
@@ -201,23 +207,30 @@ See [Setup Guide](docs/SETUP.md) for detailed configuration and [LLM Providers](
 
 ```
 ┌─────────────┐     ┌──────────────────────┐     ┌─────────────────┐
-│  Telegram   │────▶│   LLM Middleware     │────▶│     Tududi      │
-│  (Voice/    │     │  (Claude/Gemini/     │     │  (Task Storage) │
-│   Text)     │     │   MegaLLM/OpenAI)    │     └─────────────────┘
+│  Telegram   │────▶│      REMEMBRO        │────▶│     Tududi      │
+│  (Voice/    │     │   (Orchestrator +    │     │  (Task Engine)  │
+│   Text)     │     │    Intelligence)     │     └─────────────────┘
 └─────────────┘     └──────────────────────┘              │
                               │                           │
                               ▼                           ▼
                     ┌──────────────────┐        ┌─────────────────┐
-                    │    Orchestrator  │◀──────▶│    Obsidian     │
-                    │  (Brain Router)  │        │ (Knowledge Base)│
+                    │   Shift Schedule │        │    Obsidian     │
+                    │ (Google Sheets)  │        │ (Knowledge Base)│
                     └──────────────────┘        └─────────────────┘
+                              │
+                              ▼
+                    ┌──────────────────┐
+                    │  Google Calendar │
+                    │    (Scheduling)  │
+                    └──────────────────┘
 ```
 
-- **Telegram**: Low-friction capture (text, voice, images)
-- **LLM Middleware**: Multi-provider with automatic failover
-- **Tududi**: Task storage, projects, priorities
+- **Telegram**: Low-friction capture (text, voice)
+- **Remembro**: Central orchestrator + LLM intelligence (Claude, Gemini, etc.)
+- **Tududi**: Task storage and project management
 - **Obsidian**: Knowledge notes + daily logs (bidirectional sync)
-- **Orchestrator**: Routes messages to correct handlers
+- **Google Sheets**: Work shift schedule data source
+- **Google Calendar**: Event scheduling + shift sync
 
 ---
 

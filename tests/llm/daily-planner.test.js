@@ -3,16 +3,16 @@ const DailyPlanner = require('../../src/llm/daily-planner');
 describe('DailyPlanner', () => {
   let planner;
   let mockClaudeClient;
-  let mockTududuClient;
+  let mockTududiClient;
 
   beforeEach(() => {
     mockClaudeClient = {
       parseJSON: jest.fn()
     };
-    mockTududuClient = {
+    mockTududiClient = {
       getTasks: jest.fn()
     };
-    planner = new DailyPlanner(mockClaudeClient, mockTududuClient);
+    planner = new DailyPlanner(mockClaudeClient, mockTududiClient);
   });
 
   test('generates daily plan', async () => {
@@ -21,7 +21,7 @@ describe('DailyPlanner', () => {
       { id: 2, title: 'Task 2', due_date: '2025-11-19', time_estimate: 30, energy_level: 'LOW' }
     ];
 
-    mockTududuClient.getTasks.mockResolvedValue(mockTasks);
+    mockTududiClient.getTasks.mockResolvedValue(mockTasks);
 
     mockClaudeClient.parseJSON.mockResolvedValue({
       summary: 'Focus on urgent tasks',
@@ -65,7 +65,7 @@ describe('DailyPlanner', () => {
       energy_level: 'MEDIUM'
     }));
 
-    mockTududuClient.getTasks.mockResolvedValue(mockTasks);
+    mockTududiClient.getTasks.mockResolvedValue(mockTasks);
 
     mockClaudeClient.parseJSON.mockResolvedValue({
       summary: 'Too many tasks',

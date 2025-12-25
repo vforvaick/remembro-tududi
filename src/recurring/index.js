@@ -11,7 +11,7 @@ const logger = require('../utils/logger');
 
 class RecurringService {
     constructor(dependencies) {
-        this.tududuClient = dependencies.tududuClient;
+        this.tududiClient = dependencies.tududiClient;
         this.storagePath = dependencies.storagePath || '.cache/recurring-tasks.json';
         this.patterns = new Map(); // taskId -> recurrence pattern
     }
@@ -156,7 +156,7 @@ class RecurringService {
                 name: record.template.name || record.template.title
             };
 
-            const newTask = await this.tududuClient.createTask(newTaskData);
+            const newTask = await this.tududiClient.createTask(newTaskData);
 
             // Update the record with new task ID
             record.lastGenerated = new Date().toISOString();

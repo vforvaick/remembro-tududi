@@ -1,9 +1,9 @@
-const TududuClient = require('../../src/tududi/client');
+const TududiClient = require('../../src/tududi/client');
 const axios = require('axios');
 
 jest.mock('axios');
 
-describe('TududuClient', () => {
+describe('TududiClient', () => {
   let client;
   let mockAxiosInstance;
 
@@ -17,7 +17,7 @@ describe('TududuClient', () => {
 
     axios.create.mockReturnValue(mockAxiosInstance);
 
-    client = new TududuClient({
+    client = new TududiClient({
       apiUrl: 'http://localhost:3000',
       apiToken: 'test-token'
     });

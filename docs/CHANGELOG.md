@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-12-25
+
+### Changed
+- **Project Rebranding**: Renamed from "Remembro-Tududi" to **Remembro**
+- **Class Rename**: `TududuClient` → `TududiClient` (typo fix + consistency)
+- **Variable Rename**: `tududuClient` → `tududiClient` across entire codebase
+- **package.json**: Name changed to `remembro`, version bumped to 2.0.0
+- **README.md**: Complete rewrite positioning Remembro as the "brain"
+- **architecture.md**: Updated to reflect new hierarchy
+- **Startup Log**: Now says "Starting Remembro..."
+
+### Files Modified
+- `package.json`
+- `src/tududi/client.js`
+- `src/index.js`, `src/orchestrator.js`, `src/llm/daily-planner.js`
+- `src/recurring/index.js`, `src/rescheduling/index.js`, `src/weekly-review/index.js`
+- `tests/**/*.js` (all test files with tududuClient references)
+- `README.md`, `docs/architecture.md`
+
+### Reference
+- Session: dd5c3d40-6e72-4f50-833a-d93be69077b9
+
+---
+
 ## [1.9.0] - 2025-12-25
 
 ### Added

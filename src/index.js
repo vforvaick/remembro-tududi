@@ -9,7 +9,7 @@ const LLMClient = require('./llm/llm-client');
 const TaskParser = require('./llm/task-parser');
 const EventParser = require('./llm/event-parser');
 const DailyPlanner = require('./llm/daily-planner');
-const TududuClient = require('./tududi/client');
+const TududiClient = require('./tududi/client');
 const ObsidianFileManager = require('./obsidian/file-manager');
 const ObsidianSyncWatcher = require('./obsidian/sync-watcher');
 const MessageOrchestrator = require('./orchestrator');
@@ -32,7 +32,7 @@ const GoogleCalendarService = require('./calendar/google-calendar');
 
 async function main() {
   try {
-    logger.info('Starting AI-Powered ADHD Task Management System...');
+    logger.info('Starting Remembro - Your AI-Powered Personal Organizer...');
 
     // Initialize services
     const bot = new TelegramBot({
@@ -49,7 +49,7 @@ async function main() {
     const taskParser = new TaskParser(llmClient);
     const eventParser = new EventParser(llmClient);
 
-    const tududuClient = new TududuClient({
+    const tududiClient = new TududiClient({
       apiUrl: config.tududi.apiUrl,
       apiToken: config.tududi.apiToken
     });
@@ -59,7 +59,7 @@ async function main() {
       dailyNotesPath: config.obsidian.dailyNotesPath
     });
 
-    const dailyPlanner = new DailyPlanner(llmClient, tududuClient);
+    const dailyPlanner = new DailyPlanner(llmClient, tududiClient);
 
     // Initialize shift schedule if configured
     let shiftSchedule = null;
@@ -93,7 +93,7 @@ async function main() {
     // Initialize plan command
     const planCommand = new PlanCommand({
       shiftManager: shiftSchedule?.manager,
-      tududi: tududuClient,
+      tududi: tududiClient,
       dailyPlanner: dailyPlanner
     });
     logger.info('✅ Plan command initialized');
@@ -104,14 +104,14 @@ async function main() {
 
     // Initialize rescheduling service
     const rescheduler = new ReschedulingService({
-      tududuClient,
+      tududiClient,
       bot
     });
     logger.info('✅ Rescheduling service initialized');
 
     // Initialize recurring tasks service
     const recurringService = new RecurringService({
-      tududuClient,
+      tududiClient,
       storagePath: '.cache/recurring-tasks.json'
     });
     await recurringService.initialize();
@@ -119,7 +119,7 @@ async function main() {
 
     // Initialize weekly review service
     const weeklyReview = new WeeklyReviewService({
-      tududuClient
+      tududiClient
     });
     logger.info('✅ Weekly review service initialized');
 
@@ -143,7 +143,7 @@ async function main() {
 
     const orchestrator = new MessageOrchestrator({
       taskParser,
-      tududuClient,
+      tududiClient,
       fileManager,
       bot,
       shiftManager: shiftSchedule?.manager,
@@ -159,7 +159,7 @@ async function main() {
     syncWatcher.onTaskChange(async (change) => {
       try {
         logger.info(`Syncing task ${change.taskId} completion to Tududi`);
-        await tududuClient.updateTask(change.taskId, {
+        await tududiClient.updateTask(change.taskId, {
           completed: change.completed
         });
 
@@ -311,7 +311,7 @@ async function main() {
     });
 
     bot.onCommand('status', async () => {
-      const tasks = await tududuClient.getTasks({ completed: false });
+      const tasks = await tududiClient.getTasks({ completed: false });
       const providerNames = llmClient.getProviderNames();
       const shiftStatus = shiftSchedule ? '✅ Enabled' : '⏸️ Disabled';
 
@@ -348,7 +348,7 @@ async function main() {
         chaosMode.activate(chatId);
 
         // Fetch incomplete tasks and filter them
-        const allTasks = await tududuClient.getTasks({ completed: false });
+        const allTasks = await tududiClient.getTasks({ completed: false });
         const filteredTasks = chaosMode.filterTasks(allTasks, chatId);
 
         const response = chaosMode.formatChaosModeMessage(filteredTasks);

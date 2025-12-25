@@ -2,9 +2,9 @@ const logger = require('../utils/logger');
 const { buildPrompt } = require('./prompts/daily-plan');
 
 class DailyPlanner {
-  constructor(claudeClient, tududuClient) {
+  constructor(claudeClient, tududiClient) {
     this.claude = claudeClient;
-    this.tududi = tududuClient;
+    this.tududi = tududiClient;
 
     // Shift timing definitions
     this.shiftTimings = {

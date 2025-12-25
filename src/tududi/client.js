@@ -1,7 +1,7 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
 
-class TududuClient {
+class TududiClient {
   constructor(config) {
     this.apiUrl = config.apiUrl;
     this.apiToken = config.apiToken;
@@ -109,4 +109,4 @@ class TududuClient {
   }
 }
 
-module.exports = TududuClient;
+module.exports = TududiClient;

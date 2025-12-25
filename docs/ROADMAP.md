@@ -21,6 +21,7 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 - [x] **Calendar Integration**: `/today` and `/calendar` commands with Google Calendar ✅
 - [x] **Calendar Event Creation**: `/schedule` command with natural language parsing ✅
 - [x] **Shift Schedule**: `/shift` command, dynamic GID discovery, Calendar sync ✅
+- [x] **Rebranding**: Renamed system to **Remembro**, fixed `TududiClient` naming ✅
 
 ### Backlog
 - [ ] **People Context / Contact Intelligence**: Parse names from tasks and build a people knowledge base

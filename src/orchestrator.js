@@ -3,7 +3,7 @@ const logger = require('./utils/logger');
 class MessageOrchestrator {
   constructor(dependencies) {
     this.taskParser = dependencies.taskParser;
-    this.tududuClient = dependencies.tududuClient;
+    this.tududiClient = dependencies.tududiClient;
     this.fileManager = dependencies.fileManager;
     this.bot = dependencies.bot;
     this.knowledgeSearch = dependencies.knowledgeSearch;
@@ -72,7 +72,7 @@ class MessageOrchestrator {
           due_date: taskData.due_date,
           priority: taskData.priority
         };
-        const task = await this.tududuClient.createTask(tududiBuildTask);
+        const task = await this.tududiClient.createTask(tududiBuildTask);
         logger.info(`Task created: ${task.id}`);
 
         // Sync to Obsidian
@@ -150,7 +150,7 @@ class MessageOrchestrator {
 
       // If actionable, also create task
       if (parsed.actionable && parsed.actionTask) {
-        const task = await this.tududuClient.createTask(parsed.actionTask);
+        const task = await this.tududiClient.createTask(parsed.actionTask);
         await this.fileManager.appendTaskToDailyNote({
           ...parsed.actionTask,
           id: task.id

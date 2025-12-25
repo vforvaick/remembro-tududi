@@ -1,12 +1,14 @@
 # Architecture
 
 ## System Overview
-Remembro-Tududi is an orchestration layer that connects:
+**Remembro** is an AI-powered personal organizer that orchestrates:
 1.  **Input Channel:** Telegram (Text & Voice)
-2.  **Intelligence:** LLM (Claude) for Intent Understanding & Parsing
-3.  **Storage/Action:**
-    - **Tududi:** Task Management API
+2.  **Intelligence:** LLM (Claude, Gemini, etc.) for Intent Understanding & Parsing
+3.  **Connected Services:**
+    - **Tududi:** Task Management Engine
     - **Obsidian:** Local Markdown Files (Knowledge Base/Daily Notes)
+    - **Google Calendar:** Event scheduling + shift sync
+    - **Google Sheets:** Work shift schedule data source
 
 ## Components
 

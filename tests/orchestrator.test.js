@@ -3,7 +3,7 @@ const MessageOrchestrator = require('../src/orchestrator');
 describe('MessageOrchestrator', () => {
   let orchestrator;
   let mockTaskParser;
-  let mockTududuClient;
+  let mockTududiClient;
   let mockFileManager;
   let mockBot;
 
@@ -11,7 +11,7 @@ describe('MessageOrchestrator', () => {
     mockTaskParser = {
       parse: jest.fn()
     };
-    mockTududuClient = {
+    mockTududiClient = {
       createTask: jest.fn()
     };
     mockFileManager = {
@@ -24,7 +24,7 @@ describe('MessageOrchestrator', () => {
 
     orchestrator = new MessageOrchestrator({
       taskParser: mockTaskParser,
-      tududuClient: mockTududuClient,
+      tududiClient: mockTududiClient,
       fileManager: mockFileManager,
       bot: mockBot
     });
@@ -42,7 +42,7 @@ describe('MessageOrchestrator', () => {
       }]
     });
 
-    mockTududuClient.createTask.mockResolvedValue({
+    mockTududiClient.createTask.mockResolvedValue({
       id: 123,
       title: 'Beli susu anak'
     });
@@ -50,7 +50,7 @@ describe('MessageOrchestrator', () => {
     await orchestrator.handleMessage('beli susu anak');
 
     expect(mockTaskParser.parse).toHaveBeenCalledWith('beli susu anak');
-    expect(mockTududuClient.createTask).toHaveBeenCalled();
+    expect(mockTududiClient.createTask).toHaveBeenCalled();
     expect(mockFileManager.appendTaskToDailyNote).toHaveBeenCalled();
     expect(mockBot.sendMessage).toHaveBeenCalledWith(
       expect.stringContaining('✅')
@@ -66,13 +66,13 @@ describe('MessageOrchestrator', () => {
       ]
     });
 
-    mockTududuClient.createTask
+    mockTududiClient.createTask
       .mockResolvedValueOnce({ id: 1, title: 'Task 1' })
       .mockResolvedValueOnce({ id: 2, title: 'Task 2' });
 
     await orchestrator.handleMessage('task 1 and task 2');
 
-    expect(mockTududuClient.createTask).toHaveBeenCalledTimes(2);
+    expect(mockTududiClient.createTask).toHaveBeenCalledTimes(2);
     expect(mockFileManager.appendTaskToDailyNote).toHaveBeenCalledTimes(2);
   });
 
@@ -116,7 +116,7 @@ describe('MessageOrchestrator', () => {
       '/vault/Knowledge/Trading/bitcoin-timing.md'
     );
 
-    mockTududuClient.createTask.mockResolvedValue({
+    mockTududiClient.createTask.mockResolvedValue({
       id: 456,
       title: 'Test Bitcoin 30-min strategy'
     });
@@ -124,7 +124,7 @@ describe('MessageOrchestrator', () => {
     await orchestrator.handleMessage('bitcoin dips before US open');
 
     expect(mockFileManager.createKnowledgeNote).toHaveBeenCalled();
-    expect(mockTududuClient.createTask).toHaveBeenCalled();
+    expect(mockTududiClient.createTask).toHaveBeenCalled();
     expect(mockBot.sendMessage).toHaveBeenCalledWith(
       expect.stringContaining('💡 Knowledge captured')
     );

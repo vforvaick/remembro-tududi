@@ -1,7 +1,7 @@
 {
-  "name": "remembro-tududi-claude",
-  "version": "1.0.0",
-  "description": "",
+  "name": "remembro",
+  "version": "2.0.0",
+  "description": "Remembro: AI-Powered Personal Organizer",
   "main": "index.js",
   "directories": {
     "doc": "docs"

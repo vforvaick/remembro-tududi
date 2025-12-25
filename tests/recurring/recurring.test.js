@@ -4,15 +4,15 @@ const path = require('path');
 
 describe('RecurringService', () => {
     let recurringService;
-    let mockTududuClient;
+    let mockTududiClient;
     const testStoragePath = '.cache/test-recurring.json';
 
     beforeEach(async () => {
-        mockTududuClient = {
+        mockTududiClient = {
             createTask: jest.fn().mockResolvedValue({ id: 'new-123', name: 'Test Task', due_date: '2025-12-25' })
         };
         recurringService = new RecurringService({
-            tududuClient: mockTududuClient,
+            tududiClient: mockTududiClient,
             storagePath: testStoragePath
         });
 
@@ -132,7 +132,7 @@ describe('RecurringService', () => {
             const next = await recurringService.generateNextInstance('task-1');
 
             expect(next).toBeTruthy();
-            expect(mockTududuClient.createTask).toHaveBeenCalled();
+            expect(mockTududiClient.createTask).toHaveBeenCalled();
         });
 
         it('should return null when no pattern exists', async () => {

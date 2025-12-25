@@ -2,14 +2,14 @@ const WeeklyReviewService = require('../../src/weekly-review');
 
 describe('WeeklyReviewService', () => {
     let weeklyReview;
-    let mockTududuClient;
+    let mockTududiClient;
 
     beforeEach(() => {
-        mockTududuClient = {
+        mockTududiClient = {
             getTasks: jest.fn()
         };
         weeklyReview = new WeeklyReviewService({
-            tududuClient: mockTududuClient
+            tududiClient: mockTududiClient
         });
     });
 
@@ -21,7 +21,7 @@ describe('WeeklyReviewService', () => {
             const twoWeeksAgo = new Date(today);
             twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
-            mockTududuClient.getTasks.mockResolvedValue([
+            mockTududiClient.getTasks.mockResolvedValue([
                 { id: '1', name: 'Recent task', updated_at: yesterday.toISOString() },
                 { id: '2', name: 'Old task', updated_at: twoWeeksAgo.toISOString() }
             ]);

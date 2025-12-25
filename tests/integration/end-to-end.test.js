@@ -8,7 +8,7 @@ jest.mock('axios');
 
 const MessageOrchestrator = require('../../src/orchestrator');
 const TaskParser = require('../../src/llm/task-parser');
-const TududuClient = require('../../src/tududi/client');
+const TududiClient = require('../../src/tududi/client');
 const ObsidianFileManager = require('../../src/obsidian/file-manager');
 
 describe('End-to-End Integration', () => {
@@ -33,7 +33,7 @@ describe('End-to-End Integration', () => {
 
     const taskParser = new TaskParser(mockClaudeClient);
 
-    const mockTududuClient = {
+    const mockTududiClient = {
       createTask: jest.fn().mockImplementation((data) => ({
         id: Math.floor(Math.random() * 1000),
         ...data
@@ -53,7 +53,7 @@ describe('End-to-End Integration', () => {
 
     orchestrator = new MessageOrchestrator({
       taskParser,
-      tududuClient: mockTududuClient,
+      tududiClient: mockTududiClient,
       fileManager,
       bot: mockBot
     });
@@ -75,7 +75,7 @@ describe('End-to-End Integration', () => {
     await orchestrator.handleMessage('beli susu anak besok');
 
     // Verify task created in Tududi
-    expect(orchestrator.tududuClient.createTask).toHaveBeenCalled();
+    expect(orchestrator.tududiClient.createTask).toHaveBeenCalled();
 
     // Verify confirmation sent
     expect(mockBot.sendMessage).toHaveBeenCalledWith(
@@ -106,7 +106,7 @@ describe('End-to-End Integration', () => {
 
     await orchestrator.handleMessage('task 1 and task 2');
 
-    expect(orchestrator.tududuClient.createTask).toHaveBeenCalledTimes(2);
+    expect(orchestrator.tududiClient.createTask).toHaveBeenCalledTimes(2);
     expect(mockBot.sendMessage).toHaveBeenCalledWith(
       expect.stringContaining('Created 2 tasks')
     );

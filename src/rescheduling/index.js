@@ -8,7 +8,7 @@ const logger = require('../utils/logger');
 
 class ReschedulingService {
     constructor(dependencies) {
-        this.tududuClient = dependencies.tududuClient;
+        this.tududiClient = dependencies.tududiClient;
         this.bot = dependencies.bot;
     }
 
@@ -18,7 +18,7 @@ class ReschedulingService {
      */
     async getOverdueTasks() {
         try {
-            const allTasks = await this.tududuClient.getTasks({ completed: false });
+            const allTasks = await this.tududiClient.getTasks({ completed: false });
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
@@ -92,7 +92,7 @@ class ReschedulingService {
     async applyReschedule(taskId, newDate) {
         try {
             logger.info(`Rescheduling task ${taskId} to ${newDate}`);
-            const updated = await this.tududuClient.updateTask(taskId, {
+            const updated = await this.tududiClient.updateTask(taskId, {
                 due_date: newDate
             });
             logger.info(`Task ${taskId} rescheduled successfully`);
