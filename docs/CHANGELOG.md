@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2025-12-25
+
+### Changed
+- **README Overhaul**: Complete rewrite of `README.md` for better onboarding
+  - Added "A Day with Tududi" workflow section showing real usage patterns
+  - Created feature tables with descriptions
+  - Added command cheat sheet with use-case guidance
+  - Detailed configuration section with required vs optional keys
+  - Updated architecture diagram
+  - Embedded roadmap snapshot for project visibility
+
+### Files Modified
+- `README.md` - Complete rewrite
+
+### Reference
+- Session: 63d5141b-6b7c-49b5-8f86-6cfaef9a966b
+
+---
+
 ## [1.7.0] - 2025-12-24
 
 ### Added
