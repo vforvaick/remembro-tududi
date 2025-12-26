@@ -178,6 +178,15 @@ class TelegramBot {
     await this.sendMessage(text, { reply_markup: keyboard });
   }
 
+  /**
+   * Send message to specific user (for background jobs like coaching)
+   * @param {string|number} userId - Telegram user ID
+   * @param {string} text - Message text
+   */
+  async sendMessageToUser(userId, text) {
+    await this.sendMessage(text, { chatId: userId });
+  }
+
   onCallbackQuery(handler) {
     this.bot.on('callback_query', async (query) => {
       if (!this.allowedUsers.includes(query.from.id)) {

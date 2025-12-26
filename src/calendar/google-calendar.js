@@ -107,6 +107,52 @@ class GoogleCalendarService {
     }
 
     /**
+     * Get events within a specific time range
+     * @param {Date} startTime - Range start
+     * @param {Date} endTime - Range end
+     * @returns {Promise<Array>} List of events
+     */
+    async getEventsInRange(startTime, endTime) {
+        if (!this.configured) {
+            throw new Error('Google Calendar not configured');
+        }
+
+        try {
+            const response = await this.calendar.events.list({
+                calendarId: this.calendarId,
+                timeMin: startTime.toISOString(),
+                timeMax: endTime.toISOString(),
+                singleEvents: true,
+                orderBy: 'startTime'
+            });
+
+            return response.data.items || [];
+        } catch (error) {
+            logger.error(`Failed to get events in range: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Check for conflicts with existing events
+     * @param {Date} startTime - Proposed event start
+     * @param {Date} endTime - Proposed event end
+     * @returns {Promise<Object>} Conflict information
+     */
+    async checkConflicts(startTime, endTime) {
+        const events = await this.getEventsInRange(startTime, endTime);
+
+        // Filter out all-day events (less likely to be hard conflicts)
+        const timedConflicts = events.filter(e => e.start.dateTime);
+
+        return {
+            hasConflict: timedConflicts.length > 0,
+            conflictingEvents: timedConflicts,
+            allDayEvents: events.filter(e => e.start.date)
+        };
+    }
+
+    /**
      * Create a new calendar event
      * @param {Object} eventDetails - Event details
      * @param {string} eventDetails.summary - Event title

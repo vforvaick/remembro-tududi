@@ -29,6 +29,7 @@ const RecurringService = require('./recurring');
 const WeeklyReviewService = require('./weekly-review');
 const ElevenLabsTranscriber = require('./bot/elevenlabs-transcriber');
 const GoogleCalendarService = require('./calendar/google-calendar');
+const CoachingService = require('./coaching');
 
 async function main() {
   try {
@@ -141,6 +142,13 @@ async function main() {
     });
     await calendarService.initialize();
 
+    // Initialize proactive coaching service
+    const coachingService = new CoachingService({
+      bot,
+      idleThresholdHours: 4
+    });
+    logger.info('✅ Proactive coaching service initialized');
+
     const orchestrator = new MessageOrchestrator({
       taskParser,
       tududiClient,
@@ -184,6 +192,7 @@ async function main() {
     bot.onMessage(async (msg) => {
       const message = msg.text;
       logger.info(`Received message: ${message}`);
+      coachingService.recordInteraction(msg.from.id);
 
       // Check if message contains URLs (for article parsing)
       const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -516,6 +525,9 @@ async function main() {
       }
     });
 
+    // Pending events storage for conflict confirmation
+    const pendingEvents = new Map();
+
     // Schedule event command handler
     bot.onCommand('schedule', async (msg) => {
       try {
@@ -537,14 +549,47 @@ async function main() {
         try {
           const eventDetails = await eventParser.parseEvent(eventText);
 
+          // Check for conflicts (includes shift events in calendar)
+          const conflicts = await calendarService.checkConflicts(
+            eventDetails.startTime,
+            eventDetails.endTime
+          );
+
+          if (conflicts.hasConflict) {
+            // Store pending event
+            const pendingId = `pending_${Date.now()}`;
+            pendingEvents.set(pendingId, eventDetails);
+
+            // Format conflict warning
+            const conflictList = conflicts.conflictingEvents
+              .map(e => `• ${e.summary} (${calendarService.formatEventTime(e)})`)
+              .join('\n');
+
+            await bot.sendMessage(
+              `⚠️ *Conflict Detected!*\n\n` +
+              `Your event:\n📝 *${eventDetails.summary}*\n` +
+              `⏰ ${eventDetails.startTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} - ` +
+              `${eventDetails.endTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}\n\n` +
+              `Conflicts with:\n${conflictList}\n\n` +
+              `Create anyway?`,
+              {
+                reply_markup: {
+                  inline_keyboard: [[
+                    { text: '✅ Create Anyway', callback_data: `schedule_confirm:${pendingId}` },
+                    { text: '❌ Cancel', callback_data: 'schedule_cancel' }
+                  ]]
+                }
+              }
+            );
+            return;
+          }
+
+          // No conflicts, create directly
           const createdEvent = await calendarService.createEvent(eventDetails);
 
-          // Helper to format date based on whether it is a full ISO string (dateTime) or just date (date)
           const date = new Date(createdEvent.start.dateTime || createdEvent.start.date).toLocaleDateString('id-ID', {
             weekday: 'short', day: 'numeric', month: 'short'
           });
-
-          // Helper to format time
           const time = calendarService.formatEventTime(createdEvent);
 
           await bot.sendMessage(
@@ -707,6 +752,38 @@ async function main() {
           logger.error(`Reschedule callback failed: ${error.message}`);
           await bot.sendMessage(`❌ Reschedule failed: ${error.message}`);
         }
+      } else if (data.startsWith('schedule_confirm:')) {
+        // Handle schedule confirmation after conflict warning
+        try {
+          const pendingId = data.replace('schedule_confirm:', '');
+          const eventDetails = pendingEvents.get(pendingId);
+
+          if (!eventDetails) {
+            await bot.sendMessage('❌ Event expired. Please try again with /schedule');
+            return;
+          }
+
+          const createdEvent = await calendarService.createEvent(eventDetails);
+          pendingEvents.delete(pendingId);
+
+          const date = new Date(createdEvent.start.dateTime || createdEvent.start.date).toLocaleDateString('id-ID', {
+            weekday: 'short', day: 'numeric', month: 'short'
+          });
+          const time = calendarService.formatEventTime(createdEvent);
+
+          await bot.sendMessage(
+            `✅ *Event Created (Despite Conflict)!*\n\n` +
+            `📝 *${createdEvent.summary}*\n` +
+            `📅 ${date}\n` +
+            `⏰ ${time}\n` +
+            (createdEvent.location ? `📍 ${createdEvent.location}` : '')
+          );
+        } catch (error) {
+          logger.error(`Schedule confirm failed: ${error.message}`);
+          await bot.sendMessage(`❌ Failed to create event: ${error.message}`);
+        }
+      } else if (data === 'schedule_cancel') {
+        await bot.sendMessage('❌ Event cancelled. No changes made.');
       }
     });
 
@@ -751,6 +828,17 @@ async function main() {
       }
     });
     logger.info('🔁 Scheduled recurring task check at 07:00');
+
+    // Schedule proactive coaching check (every 3 hours during work hours)
+    schedule.scheduleJob('0 10,13,16,19 * * *', async () => {
+      try {
+        logger.info('🤖 Checking for idle users to coach...');
+        await coachingService.checkAndNotifyIdleUsers();
+      } catch (error) {
+        logger.error(`Coaching check failed: ${error.message}`);
+      }
+    });
+    logger.info('🤖 Scheduled coaching checks at 10:00, 13:00, 16:00, 19:00');
 
     logger.info('System started successfully! 🚀');
     logger.info('Bot is now listening for messages...');

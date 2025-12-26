@@ -78,6 +78,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Reference
 - Session: 63d5141b-6b7c-49b5-8f86-6cfaef9a966b
 
+## [1.9.0] - 2025-12-26
+
+### Added
+- **Calendar Conflict Detection**: Warns when scheduling overlaps with existing events (including shifts)
+- **Proactive Coaching**: Check-in messages when user is idle for 4+ hours
+- Inline keyboard for conflict confirmation: `[Create Anyway]` / `[Cancel]`
+- Coaching cron job at 10:00, 13:00, 16:00, 19:00
+
+### Files Added
+- `src/coaching/index.js` - CoachingService
+- `tests/coaching/coaching.test.js` - 5 tests
+
+### Files Modified
+- `src/calendar/google-calendar.js` - Added `checkConflicts()`, `getEventsInRange()`
+- `src/index.js` - Conflict flow, coaching init, cron job
+- `src/bot/telegram-bot.js` - Added `sendMessageToUser()`
+
+### Reference
+- Session: ab7590e3-070b-4a85-a0d8-eeea4f9edb3f
+
 ---
 
 ## [1.8.0] - 2025-12-25

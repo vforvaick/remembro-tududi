@@ -22,6 +22,8 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 - [x] **Calendar Event Creation**: `/schedule` command with natural language parsing ✅
 - [x] **Shift Schedule**: `/shift` command, dynamic GID discovery, Calendar sync ✅
 - [x] **Rebranding**: Renamed system to **Remembro**, fixed `TududiClient` naming ✅
+- [x] **Calendar Conflict Detection**: Warns when scheduling overlaps with events ✅
+- [x] **Proactive Coaching**: Check-in messages when idle for 4+ hours ✅
 
 ### Backlog
 - [ ] **People Context / Contact Intelligence**: Parse names from tasks and build a people knowledge base
@@ -32,8 +34,6 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
   - Future: Auto-suggest best times to contact, communication preferences, delegation patterns
 - [ ] **Photo-to-Tasks**: Send photo of whiteboard/notebook → AI extracts tasks (Gemini Vision)
 - [ ] **Gamification**: XP, streaks, level-up messages for dopamine-friendly task management
-- [ ] **Proactive Coaching**: Bot check-ins when idle
-- [ ] **Calendar: Conflict Detection**: Warn when scheduling tasks during busy times
 - [ ] **Calendar: Microsoft Support**: Add Microsoft Graph API for Teams/Outlook
 
 ## Known Issues
