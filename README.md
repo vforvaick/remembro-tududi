@@ -27,6 +27,7 @@
 | 🔁 **Recurring Tasks** | Daily/weekly/monthly patterns with auto-generation |
 | 🌪️ **Chaos Mode** | `/chaos` shows only urgent & quick tasks when overwhelmed |
 | 📆 **Google Calendar Sync** | `/today` and `/calendar` show events alongside tasks |
+| 👥 **People Context** | Extracts names from tasks & builds a people knowledge base |
 
 ### Intelligence Layer
 
@@ -117,6 +118,9 @@ Bot: 📊 Weekly Review (Dec 18-24)
 | `/plan` | Generate AI daily schedule | Start of day |
 | `/today` | Show tasks + calendar events | Reality check |
 | `/calendar` | View upcoming calendar (3 days) | Planning ahead |
+| `/schedule` | Create calendar event | Booking time |
+| `/people` | List people in your network | Relationship check |
+| `/whois` | Lookup person details | Context gathering |
 | `/chaos` | Activate focus mode | Overwhelmed |
 | `/normal` | Exit chaos mode + re-plan | When calm returns |
 | `/reschedule` | Smart bulk rescheduling | End of day cleanup |
@@ -254,9 +258,6 @@ See [Setup Guide](docs/SETUP.md) for detailed configuration and [LLM Providers](
 
 ### Planned
 - 🎮 **Gamification**: XP, streaks, level-up for dopamine-friendly task completion
-- 🤖 **Proactive Coaching**: Bot check-ins when you've been idle
-- 📅 **Calendar: Add Events**: Natural language event creation
-- ⚠️ **Calendar: Conflict Detection**: Warn when scheduling during busy times
 - 🔗 **Microsoft Calendar**: Teams/Outlook integration
 
 See full [Roadmap](docs/ROADMAP.md) for details.
