@@ -41,9 +41,9 @@
 - **Calendar Service (`src/calendar`):** Integration with Google Calendar API.
 - **Chaos Mode (`src/chaos-mode`):** Task filtering for focus.
 - **Shift Schedule (`src/shift-schedule`):** Fetch work shifts from Google Sheets and sync to Calendar.
+- **People Service (`src/people`):** Contact Intelligence & Knowledge Base.
 
 ### 7. External Integrations
-- **ElevenLabs:** Speaker diarization for multi-user voice notes.
 - **ElevenLabs:** Speaker diarization for multi-user voice notes.
 - **Google Calendar:** Read/Write events and sync shifts.
 - **Google Sheets:** Read public shift schedule CSV data.
