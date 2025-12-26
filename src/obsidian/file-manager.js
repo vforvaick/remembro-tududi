@@ -164,6 +164,64 @@ ${content}
 
     return false;
   }
+
+  /**
+   * Create a person note in Obsidian People/ folder
+   * @param {object} person - Person data from PeopleService
+   * @returns {string} Path to created note
+   */
+  async createPersonNote(person) {
+    const peoplePath = path.join(this.vaultPath, 'People');
+    const fileName = `${person.id}.md`;
+    const filePath = path.join(peoplePath, fileName);
+
+    // Create People directory if needed
+    if (!fs.existsSync(peoplePath)) {
+      fs.mkdirSync(peoplePath, { recursive: true });
+    }
+
+    // Build tags string
+    const tags = (person.tags || []).map(t => `#${t}`).join(' ');
+
+    // Build metadata section
+    const metaLines = [];
+    if (person.metadata) {
+      if (person.metadata.organization) metaLines.push(`**Organization:** ${person.metadata.organization}`);
+      if (person.metadata.hierarchy) metaLines.push(`**Hierarchy:** ${person.metadata.hierarchy}`);
+      if (person.metadata.reports_to) metaLines.push(`**Reports to:** ${person.metadata.reports_to}`);
+      if (person.metadata.contact_preference) metaLines.push(`**Contact via:** ${person.metadata.contact_preference}`);
+    }
+
+    // Format note content with YAML frontmatter
+    const noteContent = `---
+aliases: [${(person.aliases || []).map(a => `"${a}"`).join(', ')}]
+tags: [${(person.tags || []).join(', ')}]
+created: ${person.created_at}
+---
+
+# ${person.name}
+
+${metaLines.join('\n')}
+
+## Description
+
+${person.description || '_No description yet._'}
+
+## Notes
+
+${person.metadata?.notes || '_No additional notes._'}
+
+## Related Tasks
+
+_Tasks mentioning ${person.name} will be linked here._
+
+`;
+
+    fs.writeFileSync(filePath, noteContent);
+    logger.info(`Created person note: ${person.name}`);
+
+    return filePath;
+  }
 }
 
 module.exports = ObsidianFileManager;

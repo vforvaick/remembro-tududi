@@ -20,6 +20,7 @@ When message contains actionable items, extract:
 - project: Category (Shopping, Work, Family, Business, Personal)
 - priority: urgent, high, medium, low
 - notes: Additional context
+- people_mentioned: Array of person names mentioned (e.g., "Pak Ekgik", "Mas Afan")
 
 KNOWLEDGE EXTRACTION:
 When message contains information/insights (not actionable):
@@ -50,6 +51,7 @@ OUTPUT FORMAT (JSON only):
 {
   "type": "task" | "knowledge" | "question",
   "tasks": [{ task objects }],  // if type is task
+  "people_mentioned": ["..."],  // person names found in message (always include)
   "title": "...",               // if type is knowledge
   "content": "...",             // if type is knowledge
   "category": "...",            // if type is knowledge

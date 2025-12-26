@@ -7,6 +7,7 @@ class MessageOrchestrator {
     this.fileManager = dependencies.fileManager;
     this.bot = dependencies.bot;
     this.knowledgeSearch = dependencies.knowledgeSearch;
+    this.peopleService = dependencies.peopleService;
   }
 
   async handleMessage(message) {
@@ -130,6 +131,26 @@ class MessageOrchestrator {
       await this.bot.editStatusMessage(statusMessageId, response);
     } else {
       await this.bot.sendMessage(response);
+    }
+
+    // Track people mentioned in the message (async, non-blocking)
+    if (this.peopleService && parsed.people_mentioned && parsed.people_mentioned.length > 0) {
+      for (const personName of parsed.people_mentioned) {
+        try {
+          const wasPending = this.peopleService.markAsPending(
+            personName,
+            tasks.map(t => t.title).join(', ')
+          );
+          if (wasPending) {
+            logger.info(`Queued unknown person: ${personName}`);
+          } else {
+            // Person is known, increment their task count
+            this.peopleService.incrementTaskCount(personName);
+          }
+        } catch (err) {
+          logger.warn(`Failed to track person ${personName}: ${err.message}`);
+        }
+      }
     }
   }
 

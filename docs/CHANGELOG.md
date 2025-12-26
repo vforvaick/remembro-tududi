@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-12-26
+
+### Added
+- **People Context / Contact Intelligence**: Build a knowledge base of people you interact with
+  - AI extracts person names from task messages (e.g., "submit report to Pak Ekgik")
+  - Unknown people queued for later description (async, non-blocking)
+  - Natural language descriptions parsed into structured metadata via LLM
+  - Obsidian notes created in `People/` folder with YAML frontmatter
+- **`/people` command**: List known contacts and pending unknown people
+- **`/whois <name>` command**: Lookup details about a specific person
+
+### Files Added
+- `src/people/people-service.js` - Core PeopleService with CRUD, pending queue, LLM metadata extraction
+- `src/llm/prompts/parse-person.js` - Prompt for parsing person descriptions
+- `data/people.json` - JSON storage for people knowledge base
+- `tests/people/people-service.test.js` - 19 tests
+
+### Files Modified
+- `src/llm/prompts/parse-task.js` - Added `people_mentioned` extraction
+- `src/obsidian/file-manager.js` - Added `createPersonNote()` method
+- `src/orchestrator.js` - Integrated PeopleService for people tracking
+- `src/index.js` - Added PeopleService init, `/people` and `/whois` commands
+- `.gitignore` - Allow `data/people.json` to be tracked
+
+### Reference
+- Session: 63d5141b-6b7c-49b5-8f86-6cfaef9a966b
+
+---
+
 ## [2.0.0] - 2025-12-25
 
 ### Changed

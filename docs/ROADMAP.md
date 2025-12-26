@@ -17,24 +17,20 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 ### In Progress
 
 ### Completed Today
-- [x] **Calendar Integration**: `/today` and `/calendar` commands with Google Calendar ✅
+- [x] **People Context / Contact Intelligence**: `/people` and `/whois` commands with LLM metadata extraction ✅
 - [x] **Calendar Integration**: `/today` and `/calendar` commands with Google Calendar ✅
 - [x] **Calendar Event Creation**: `/schedule` command with natural language parsing ✅
 - [x] **Shift Schedule**: `/shift` command, dynamic GID discovery, Calendar sync ✅
-- [x] **Rebranding**: Renamed system to **Remembro**, fixed `TududiClient` naming ✅
 - [x] **Calendar Conflict Detection**: Warns when scheduling overlaps with events ✅
 - [x] **Proactive Coaching**: Check-in messages when idle for 4+ hours ✅
+- [x] **Rebranding**: Renamed system to **Remembro**, fixed `TududiClient` naming ✅
 
 ### Backlog
-- [ ] **People Context / Contact Intelligence**: Parse names from tasks and build a people knowledge base
-  - AI extracts person names from messages (e.g., "submit report to Pak Egi")
-  - Bot asks "Who is Pak Egi?" when encountering new names
-  - Store relationship info: role, hierarchy, preferences (e.g., "Department Head, 2 levels above me")
-  - Storage options: Obsidian markdown files (`People/pak-egi.md`) or JSON database
-  - Future: Auto-suggest best times to contact, communication preferences, delegation patterns
 - [ ] **Photo-to-Tasks**: Send photo of whiteboard/notebook → AI extracts tasks (Gemini Vision)
 - [ ] **Gamification**: XP, streaks, level-up messages for dopamine-friendly task management
 - [ ] **Calendar: Microsoft Support**: Add Microsoft Graph API for Teams/Outlook
+- [ ] **People: Auto-suggest contact times**: Based on interaction history
+- [ ] **People: Relationship graph**: Visualize org hierarchy from people data
 
 ## Known Issues
 *No critical issues at this time.*
@@ -43,6 +39,7 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 *No outstanding debt.*
 
 ## Recently Completed
+- ✅ **People Context** (2025-12-26): `/people` and `/whois` commands, LLM metadata extraction.
 - ✅ **Semantic Search** (2025-12-24): Questions now search knowledge base via orchestrator.
 - ✅ **Chaos Mode** (2025-12-23): `/chaos` and `/normal` commands with task filtering.
 - ✅ **Multi-user Support** (2025-12-23): Multiple authorized users via `TELEGRAM_ALLOWED_USERS`.

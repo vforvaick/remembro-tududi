@@ -30,6 +30,7 @@ const WeeklyReviewService = require('./weekly-review');
 const ElevenLabsTranscriber = require('./bot/elevenlabs-transcriber');
 const GoogleCalendarService = require('./calendar/google-calendar');
 const CoachingService = require('./coaching');
+const PeopleService = require('./people/people-service');
 
 async function main() {
   try {
@@ -149,6 +150,14 @@ async function main() {
     });
     logger.info('✅ Proactive coaching service initialized');
 
+    // Initialize people service
+    const peopleService = new PeopleService({
+      dataPath: 'data/people.json',
+      llmClient: llmClient,
+      fileManager: fileManager
+    });
+    logger.info('✅ People service initialized');
+
     const orchestrator = new MessageOrchestrator({
       taskParser,
       tududiClient,
@@ -156,7 +165,8 @@ async function main() {
       bot,
       shiftManager: shiftSchedule?.manager,
       articleParser,
-      knowledgeSearch
+      knowledgeSearch,
+      peopleService
     });
 
     // Set up Obsidian sync watcher
@@ -286,7 +296,9 @@ async function main() {
         '/status - Show system status\n' +
         '/today - Today\'s calendar events\n' +
         '/calendar - Upcoming events\n' +
-        '/schedule - Create a new event'
+        '/schedule - Create a new event\n' +
+        '/people - View people in your network\n' +
+        '/whois <name> - Lookup a person'
       );
     });
 
@@ -648,6 +660,100 @@ async function main() {
       } catch (error) {
         logger.error(`Summary failed: ${error.message}`);
         await bot.sendMessage(`❌ Summary failed: ${error.message}`);
+      }
+    });
+
+    // People command - list known people and pending
+    bot.onCommand('people', async (msg) => {
+      try {
+        const people = peopleService.listPeople();
+        const pending = peopleService.getPendingPeople();
+
+        let message = '';
+
+        if (people.length === 0 && pending.length === 0) {
+          await bot.sendMessage(
+            '👥 *No people in your network yet*\n\n' +
+            '_When you mention someone in a task (e.g., "submit report to Pak Ekgik"), ' +
+            'I\'ll ask you about them._'
+          );
+          return;
+        }
+
+        if (people.length > 0) {
+          message += `👥 *${people.length} Known Contact${people.length > 1 ? 's' : ''}*\n\n`;
+          people.forEach((p, i) => {
+            const org = p.metadata?.organization ? ` (${p.metadata.organization})` : '';
+            const tasks = p.task_count ? ` · ${p.task_count} tasks` : '';
+            message += `${i + 1}. *${p.name}*${org}${tasks}\n`;
+          });
+        }
+
+        if (pending.length > 0) {
+          message += `\n❓ *${pending.length} Unknown (Pending)*\n`;
+          pending.forEach((p) => {
+            message += `• ${p.name} (mentioned ${p.mentions}x)\n`;
+          });
+          message += `\n_Reply to tell me about them, e.g. "Pak Ekgik adalah department head"_`;
+        }
+
+        await bot.sendMessage(message);
+      } catch (error) {
+        logger.error(`People command failed: ${error.message}`);
+        await bot.sendMessage(`❌ Failed to list people: ${error.message}`);
+      }
+    });
+
+    // Whois command - lookup a specific person
+    bot.onCommand('whois', async (msg) => {
+      try {
+        const commandText = msg.text || '/whois';
+        const name = commandText.replace('/whois', '').trim();
+
+        if (!name) {
+          await bot.sendMessage('❓ Please provide a name.\n\n*Example:* /whois Pak Ekgik');
+          return;
+        }
+
+        const person = peopleService.getPerson(name);
+
+        if (!person) {
+          // Check if in pending
+          const pending = peopleService.getPendingPeople();
+          const isPending = pending.find(p => p.name.toLowerCase() === name.toLowerCase());
+
+          if (isPending) {
+            await bot.sendMessage(
+              `❓ I don't know *${name}* yet.\n\n` +
+              `_Mentioned ${isPending.mentions}x in:_\n` +
+              `${isPending.contexts?.slice(-3).map(c => `• ${c}`).join('\n') || 'No context'}\n\n` +
+              `_Tell me about them: "${name} adalah..."_`
+            );
+          } else {
+            await bot.sendMessage(`❓ I don't know anyone named *${name}*.`);
+          }
+          return;
+        }
+
+        // Format person details
+        let message = `👤 *${person.name}*\n`;
+        if (person.aliases && person.aliases.length > 0) {
+          message += `_Also known as: ${person.aliases.join(', ')}_\n`;
+        }
+        message += '\n';
+
+        if (person.metadata?.organization) message += `🏢 ${person.metadata.organization}\n`;
+        if (person.metadata?.hierarchy) message += `📊 ${person.metadata.hierarchy}\n`;
+        if (person.metadata?.contact_preference) message += `📱 Contact via: ${person.metadata.contact_preference}\n`;
+        if (person.tags && person.tags.length > 0) message += `🏷️ ${person.tags.join(', ')}\n`;
+        if (person.task_count) message += `📋 ${person.task_count} tasks\n`;
+
+        message += `\n📝 ${person.description || '_No description_'}`;
+
+        await bot.sendMessage(message);
+      } catch (error) {
+        logger.error(`Whois command failed: ${error.message}`);
+        await bot.sendMessage(`❌ Lookup failed: ${error.message}`);
       }
     });
 
