@@ -9,6 +9,7 @@ class MessageOrchestrator {
     this.bot = dependencies.bot;
     this.knowledgeSearch = dependencies.knowledgeSearch;
     this.peopleService = dependencies.peopleService;
+    this.photoParser = dependencies.photoParser;
   }
 
   /**
@@ -109,6 +110,55 @@ class MessageOrchestrator {
       await this.bot.editStatusMessage(statusMessageId, response);
     } else {
       await this.bot.sendMessage(response);
+    }
+  }
+
+  /**
+   * Handle photo messages - extract tasks from image via Gemini Vision
+   * @param {Buffer} imageBuffer - Image data
+   * @param {string} mimeType - Image MIME type
+   * @param {object} context - userId, caption
+   */
+  async handlePhotoMessage(imageBuffer, mimeType, context = {}) {
+    const userId = context.userId || 'default';
+
+    try {
+      if (!this.photoParser) {
+        await this.bot.sendMessage('📸 Photo parsing tidak aktif. Set `GEMINI_API_KEY` untuk mengaktifkan.');
+        return;
+      }
+
+      // Parse image with Gemini Vision
+      const parsed = await this.photoParser.parse(imageBuffer, mimeType);
+
+      if (!parsed.potential_tasks || parsed.potential_tasks.length === 0) {
+        await this.bot.sendMessage(
+          `📸 *Analyzed:* ${parsed.summary}\n\n_Tidak ada task yang terdeteksi dari gambar._`
+        );
+        return;
+      }
+
+      // Reuse story confirmation flow
+      const summary = `📸 Image: ${parsed.summary}`;
+      let response = `${summary}\n\n`;
+      response += `📋 *Found ${parsed.potential_tasks.length} potential task(s):*\n`;
+      parsed.potential_tasks.forEach((t, i) => {
+        response += `${i + 1}. ${t.title}\n`;
+      });
+      response += `\n_Reply dengan nomor (cth: "1,2") atau "all" / "skip"_`;
+
+      // Store state for confirmation
+      conversationState.set(userId, {
+        type: 'story_confirmation',
+        summary: summary,
+        potential_tasks: parsed.potential_tasks,
+        people_mentioned: parsed.people_mentioned || []
+      });
+
+      await this.bot.sendMessage(response);
+    } catch (error) {
+      logger.error(`Photo handling failed: ${error.message}`);
+      await this.bot.sendMessage(`❌ Gagal menganalisis gambar: ${error.message}`);
     }
   }
 

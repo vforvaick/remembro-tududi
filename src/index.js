@@ -31,6 +31,8 @@ const ElevenLabsTranscriber = require('./bot/elevenlabs-transcriber');
 const GoogleCalendarService = require('./calendar/google-calendar');
 const CoachingService = require('./coaching');
 const PeopleService = require('./people/people-service');
+const PhotoParser = require('./llm/photo-parser');
+const GeminiProvider = require('./llm/providers/gemini-provider');
 
 async function main() {
   try {
@@ -158,6 +160,21 @@ async function main() {
     });
     logger.info('✅ People service initialized');
 
+    // Initialize photo parser for image-to-task extraction
+    let photoParser = null;
+    if (config.gemini?.apiKey) {
+      const geminiProvider = new GeminiProvider({
+        apiKey: config.gemini.apiKey,
+        visionModel: 'gemini-1.5-flash'
+      });
+      if (geminiProvider.isVisionConfigured()) {
+        photoParser = new PhotoParser(geminiProvider);
+        logger.info('✅ Photo parser initialized (Gemini Vision)');
+      }
+    } else {
+      logger.info('ℹ️ Photo parser not configured (set GEMINI_API_KEY)');
+    }
+
     const orchestrator = new MessageOrchestrator({
       taskParser,
       tududiClient,
@@ -166,7 +183,8 @@ async function main() {
       shiftManager: shiftSchedule?.manager,
       articleParser,
       knowledgeSearch,
-      peopleService
+      peopleService,
+      photoParser
     });
 
     // Set up Obsidian sync watcher
@@ -276,6 +294,42 @@ async function main() {
       } catch (error) {
         logger.error(`Voice processing error: ${error.message}`);
         await bot.sendMessage('❌ Failed to process voice message');
+      }
+    });
+
+    // Photo message handler (for image-to-task extraction)
+    bot.onPhotoMessage(async (msg) => {
+      try {
+        logger.info('Received photo message');
+
+        if (!photoParser) {
+          await bot.sendMessage('📸 Photo parsing tidak aktif. Set `GEMINI_API_KEY` untuk mengaktifkan.');
+          return;
+        }
+
+        await bot.sendMessage('📸 Analyzing image for tasks...');
+
+        // Get largest photo (last in array)
+        const photos = msg.photo;
+        const largestPhoto = photos[photos.length - 1];
+
+        // Download photo
+        const photoPath = await bot.downloadPhoto(largestPhoto.file_id);
+        const fs = require('fs');
+        const imageBuffer = fs.readFileSync(photoPath);
+
+        // Determine mime type from extension
+        const ext = photoPath.split('.').pop().toLowerCase();
+        const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+
+        // Parse image with orchestrator (will use story confirmation flow)
+        await orchestrator.handlePhotoMessage(imageBuffer, mimeType, {
+          userId: msg.from.id,
+          caption: msg.caption || ''
+        });
+      } catch (error) {
+        logger.error(`Photo processing error: ${error.message}`);
+        await bot.sendMessage(`❌ Photo processing error: ${error.message}`);
       }
     });
 

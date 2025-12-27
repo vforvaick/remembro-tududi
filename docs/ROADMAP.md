@@ -17,6 +17,8 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 ### In Progress
 
 ### Completed Today
+- [x] **Photo-to-Tasks**: Send photo of whiteboard/notes → Gemini Vision extracts tasks ✅
+- [x] **Conversation State Persistence (Phase 2)**: State persists to JSON file for restart survival ✅
 - [x] **Conversational Flow Enhancement**: Greeting, chitchat, story-based task extraction with confirmation flow ✅
 - [x] **People Context / Contact Intelligence**: `/people` and `/whois` commands with LLM metadata extraction ✅
 - [x] **Calendar Integration**: `/today` and `/calendar` commands with Google Calendar ✅
@@ -27,9 +29,7 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 - [x] **Rebranding**: Renamed system to **Remembro**, fixed `TududiClient` naming ✅
 
 ### Backlog
-- [ ] **Conversation State Persistence (Phase 2)**: Persist to SQLite/JSON for restart survival
 - [ ] **Conversation Context (Phase 3)**: Full conversation history with context window for LLM
-- [ ] **Photo-to-Tasks**: Send photo of whiteboard/notebook → AI extracts tasks (Gemini Vision)
 - [ ] **Gamification**: XP, streaks, level-up messages for dopamine-friendly task management
 - [ ] **Calendar: Microsoft Support**: Add Microsoft Graph API for Teams/Outlook
 - [ ] **People: Auto-suggest contact times**: Based on interaction history

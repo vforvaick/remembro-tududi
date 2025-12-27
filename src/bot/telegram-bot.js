@@ -62,6 +62,25 @@ class TelegramBot {
     });
   }
 
+  onPhotoMessage(handler) {
+    this.bot.on('photo', async (msg) => {
+      if (!this.isAuthorized(msg)) {
+        logger.warn(`Unauthorized photo from user ${msg.from.id}`);
+        return;
+      }
+
+      // Set current chat context for replies
+      this.currentChatId = msg.chat.id;
+
+      try {
+        await handler(msg);
+      } catch (error) {
+        logger.error(`Photo handler error: ${error.message}`);
+        await this.sendMessage(`❌ Photo processing error: ${error.message}`);
+      }
+    });
+  }
+
   onCommand(command, handler) {
     this.bot.onText(new RegExp(`^/${command}`), async (msg) => {
       if (!this.isAuthorized(msg)) {
@@ -161,6 +180,21 @@ class TelegramBot {
       return downloadPath;
     } catch (error) {
       logger.error(`Failed to download voice: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async downloadPhoto(fileId) {
+    try {
+      const file = await this.bot.getFile(fileId);
+      // Telegram Bot API returns file path relative to https://api.telegram.org/file/bot<token>/<file_path>
+      // node-telegram-bot-api's downloadFile downloads to a directory
+      const downloadDir = '/tmp';
+      const filePath = await this.bot.downloadFile(fileId, downloadDir);
+      logger.info(`Photo file downloaded to: ${filePath}`);
+      return filePath;
+    } catch (error) {
+      logger.error(`Failed to download photo: ${error.message}`);
       throw error;
     }
   }

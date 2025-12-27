@@ -18,15 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Story → Task Extraction**: Share context like "perlu follow up Arjun tentang uang forex" and bot offers to create tasks
 - **Task Sequence/Grouping**: Multiple tasks from one story are linked with `story_id` for batch rescheduling
 - **Voice Note Optimization**: VN transcripts biased toward story-type for natural extraction
-- **Conversation State Store**: In-memory state for multi-turn confirmation flow (Phase 1)
+- **Photo-to-Tasks**: Send photo of whiteboard/notes → Gemini Vision extracts tasks
+- **Conversation State Persistence**: State now persists to JSON file (survives restart)
 
 ### Files Added
-- `src/state/conversation-state.js` - In-memory state store with auto-prune
+- `src/state/conversation-state.js` - State store with JSON persistence
+- `src/llm/photo-parser.js` - Gemini Vision photo parser
 
 ### Files Modified
-- `src/llm/prompts/parse-task.js` - Complete rewrite with 6 message types, `source` context
-- `src/orchestrator.js` - Added greeting/chitchat/story handlers, story confirmation flow
-- `src/index.js` - Pass `userId` and `source` context to orchestrator
+- `src/llm/providers/gemini-provider.js` - Added vision support (`sendMessageWithImage`)
+- `src/bot/telegram-bot.js` - Added `onPhotoMessage` and `downloadPhoto`
+- `src/llm/prompts/parse-task.js` - Complete rewrite with 6 message types
+- `src/orchestrator.js` - Added greeting/chitchat/story/photo handlers
+- `src/index.js` - Added PhotoParser init and photo message handler
 
 ### Reference
 - Session: 958c62c0-1245-46d2-bd76-0b8fa2f9c79b
