@@ -78,6 +78,15 @@ module.exports = {
     model: optional('CLAUDE_MODEL', 'claude-3-5-sonnet-20241022'),
     maxTokens: parseInteger('CLAUDE_MAX_TOKENS', process.env.CLAUDE_MAX_TOKENS, '4096'),
   },
+  // CLIProxyAPI - Main LLM provider (deployed on fight-cuatro)
+  cliproxy: {
+    baseURL: optional('CLIPROXY_BASE_URL', 'http://fight-cuatro:8317/v1'),
+    apiKey: optionalKey('CLIPROXY_API_KEY'),
+    modelShort: optional('CLIPROXY_MODEL_SHORT', 'gemini-2.5-flash-lite'),
+    modelMedium: optional('CLIPROXY_MODEL_MEDIUM', 'gemini-2.5-flash'),
+    modelLong: optional('CLIPROXY_MODEL_LONG', 'gemini-3-pro-preview'),
+    modelVision: optional('CLIPROXY_MODEL_VISION', 'gemini-3-pro-image-preview'),
+  },
   gemini: {
     // Support multiple keys: GEMINI_API_KEYS (comma-separated) or GEMINI_API_KEY (single)
     apiKey: optionalKey('GEMINI_API_KEYS') || optionalKey('GEMINI_API_KEY'),

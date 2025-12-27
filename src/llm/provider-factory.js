@@ -2,12 +2,13 @@ const ClaudeProvider = require('./providers/claude-provider');
 const GeminiProvider = require('./providers/gemini-provider');
 const MegaLLMProvider = require('./providers/megallm-provider');
 const OpenAIProvider = require('./providers/openai-provider');
+const CLIProxyProvider = require('./providers/cliproxy-provider');
 const logger = require('../utils/logger');
 
 class ProviderFactory {
   /**
    * Create an LLM provider instance based on the provider name
-   * @param {string} providerName - Name of the provider (claude, gemini, megallm, openai)
+   * @param {string} providerName - Name of the provider (claude, gemini, megallm, openai, cliproxy)
    * @param {object} config - Configuration object for the provider
    * @returns {BaseLLMProvider|null} - Provider instance or null if not supported
    */
@@ -15,6 +16,9 @@ class ProviderFactory {
     const name = providerName.toLowerCase();
 
     switch (name) {
+      case 'cliproxy':
+        return new CLIProxyProvider(config);
+
       case 'claude':
         return new ClaudeProvider(config);
 
