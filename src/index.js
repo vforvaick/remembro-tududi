@@ -242,7 +242,7 @@ async function main() {
       }
 
       // Fall back to orchestrator for normal message handling
-      await orchestrator.handleMessage(message);
+      await orchestrator.handleMessage(message, { userId: msg.from.id, source: 'text' });
     });
 
     bot.onVoiceMessage(async (msg) => {
@@ -262,7 +262,7 @@ async function main() {
             await bot.sendMessage(`📝 Transcribed: "${result.text}"\n\nProcessing...`);
           }
 
-          await orchestrator.handleMessage(result.text);
+          await orchestrator.handleMessage(result.text, { userId: msg.from.id, source: 'voice' });
         } else {
           await bot.sendMessage('🎤 Transcribing voice message...');
           const voiceFilePath = await bot.downloadVoice(msg.voice.file_id);
@@ -271,7 +271,7 @@ async function main() {
           logger.info(`Transcription: ${transcription}`);
           await bot.sendMessage(`📝 Transcribed: "${transcription}"\n\nProcessing...`);
 
-          await orchestrator.handleMessage(transcription);
+          await orchestrator.handleMessage(transcription, { userId: msg.from.id, source: 'voice' });
         }
       } catch (error) {
         logger.error(`Voice processing error: ${error.message}`);

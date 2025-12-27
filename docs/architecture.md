@@ -19,9 +19,14 @@
 
 ### 2. Orchestrator (`src/orchestrator.js`)
 - Central hub routing messages.
-- Flow: `Message -> Orchestrator -> LLM -> Intent -> Action (Tududi/Obsidian)`.
+- Flow: `Message -> Orchestrator -> LLM -> Intent -> Action`.
+- **Flow Control:** Manages multi-turn conversations (e.g. story confirmation) via Conversation State.
 
-### 3. LLM Middleware (`src/llm`)
+### 3. Conversation State (`src/state/conversation-state.js`)
+- **In-Memory Store:** Manages transient user states (pending confirmations).
+- **TTL:** Auto-prunes stale states after 30 minutes.
+
+### 4. LLM Middleware (`src/llm`)
 - **Task Parser:** Extracts task details (name, due date, project) from natural language.
 - **Prompt Engineering:** specialized prompts for daily planning vs task capture.
 

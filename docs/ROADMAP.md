@@ -17,6 +17,7 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 ### In Progress
 
 ### Completed Today
+- [x] **Conversational Flow Enhancement**: Greeting, chitchat, story-based task extraction with confirmation flow ✅
 - [x] **People Context / Contact Intelligence**: `/people` and `/whois` commands with LLM metadata extraction ✅
 - [x] **Calendar Integration**: `/today` and `/calendar` commands with Google Calendar ✅
 - [x] **Calendar Event Creation**: `/schedule` command with natural language parsing ✅
@@ -26,6 +27,8 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 - [x] **Rebranding**: Renamed system to **Remembro**, fixed `TududiClient` naming ✅
 
 ### Backlog
+- [ ] **Conversation State Persistence (Phase 2)**: Persist to SQLite/JSON for restart survival
+- [ ] **Conversation Context (Phase 3)**: Full conversation history with context window for LLM
 - [ ] **Photo-to-Tasks**: Send photo of whiteboard/notebook → AI extracts tasks (Gemini Vision)
 - [ ] **Gamification**: XP, streaks, level-up messages for dopamine-friendly task management
 - [ ] **Calendar: Microsoft Support**: Add Microsoft Graph API for Teams/Outlook
@@ -39,6 +42,7 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 *No outstanding debt.*
 
 ## Recently Completed
+- ✅ **Conversational Flow** (2025-12-27): Greeting/chitchat/story types, story→task extraction, sequence grouping.
 - ✅ **People Context** (2025-12-26): `/people` and `/whois` commands, LLM metadata extraction.
 - ✅ **Semantic Search** (2025-12-24): Questions now search knowledge base via orchestrator.
 - ✅ **Chaos Mode** (2025-12-23): `/chaos` and `/normal` commands with task filtering.
@@ -46,3 +50,4 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 - ✅ **Test Flakiness Fix** (2025-12-22): OpenAI key optional, jest ignores `.worktrees/`.
 - ✅ **VPS Infra Hardening** (2025-12-22): pm2 installed, systemd startup configured.
 - ✅ **MVP 1** (2025-11-18): Core flow Telegram → Claude → Tududi/Obsidian.
+

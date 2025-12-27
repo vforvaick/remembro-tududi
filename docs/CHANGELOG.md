@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2025-12-27
+
+### Added
+- **Conversational Flow Enhancement**: Bot now intelligently classifies messages into 6 types:
+  - `greeting` - "Halo", "Hey" → friendly reply
+  - `chitchat` - Venting, casual talk → empathetic response
+  - `story` - Context/background sharing → extract potential tasks with confirmation
+  - `task` - Direct tasks → immediate creation
+  - `knowledge` - Insights to save → Obsidian note
+  - `question` - Queries → knowledge search
+- **Story → Task Extraction**: Share context like "perlu follow up Arjun tentang uang forex" and bot offers to create tasks
+- **Task Sequence/Grouping**: Multiple tasks from one story are linked with `story_id` for batch rescheduling
+- **Voice Note Optimization**: VN transcripts biased toward story-type for natural extraction
+- **Conversation State Store**: In-memory state for multi-turn confirmation flow (Phase 1)
+
+### Files Added
+- `src/state/conversation-state.js` - In-memory state store with auto-prune
+
+### Files Modified
+- `src/llm/prompts/parse-task.js` - Complete rewrite with 6 message types, `source` context
+- `src/orchestrator.js` - Added greeting/chitchat/story handlers, story confirmation flow
+- `src/index.js` - Pass `userId` and `source` context to orchestrator
+
+### Reference
+- Session: 958c62c0-1245-46d2-bd76-0b8fa2f9c79b
+
+---
+
 ## [2.1.0] - 2025-12-26
 
 ### Added
