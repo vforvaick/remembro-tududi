@@ -267,30 +267,24 @@ async function main() {
       try {
         logger.info('Received voice message');
 
-        // Use ElevenLabs if configured (has diarization), otherwise OpenAI Whisper
-        if (elevenLabsTranscriber && elevenLabsTranscriber.isConfigured()) {
-          await bot.sendMessage('🎤 Transcribing with speaker detection...');
-          const voiceFilePath = await bot.downloadVoice(msg.voice.file_id);
-          const result = await elevenLabsTranscriber.transcribeWithDiarization(voiceFilePath);
-
-          if (result.speakerCount > 1) {
-            logger.info(`Detected ${result.speakerCount} speakers`);
-            await bot.sendMessage(`📝 *Transcription (${result.speakerCount} speakers):*\n\n${result.formatted}\n\nProcessing...`);
-          } else {
-            await bot.sendMessage(`📝 Transcribed: "${result.text}"\n\nProcessing...`);
-          }
-
-          await orchestrator.handleMessage(result.text, { userId: msg.from.id, source: 'voice' });
-        } else {
-          await bot.sendMessage('🎤 Transcribing voice message...');
-          const voiceFilePath = await bot.downloadVoice(msg.voice.file_id);
-          const transcription = await transcriber.transcribe(voiceFilePath);
-
-          logger.info(`Transcription: ${transcription}`);
-          await bot.sendMessage(`📝 Transcribed: "${transcription}"\n\nProcessing...`);
-
-          await orchestrator.handleMessage(transcription, { userId: msg.from.id, source: 'voice' });
+        // ElevenLabs is the sole transcriber
+        if (!elevenLabsTranscriber || !elevenLabsTranscriber.isConfigured()) {
+          await bot.sendMessage('🎤 Voice transcription tidak aktif. Set `ELEVENLABS_API_KEY`.');
+          return;
         }
+
+        await bot.sendMessage('🎤 Transcribing with speaker detection...');
+        const voiceFilePath = await bot.downloadVoice(msg.voice.file_id);
+        const result = await elevenLabsTranscriber.transcribeWithDiarization(voiceFilePath);
+
+        if (result.speakerCount > 1) {
+          logger.info(`Detected ${result.speakerCount} speakers`);
+          await bot.sendMessage(`📝 *Transcription (${result.speakerCount} speakers):*\n\n${result.formatted}\n\nProcessing...`);
+        } else {
+          await bot.sendMessage(`📝 Transcribed: "${result.text}"\n\nProcessing...`);
+        }
+
+        await orchestrator.handleMessage(result.text, { userId: msg.from.id, source: 'voice' });
       } catch (error) {
         logger.error(`Voice processing error: ${error.message}`);
         await bot.sendMessage('❌ Failed to process voice message');

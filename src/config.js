@@ -79,8 +79,13 @@ module.exports = {
     maxTokens: parseInteger('CLAUDE_MAX_TOKENS', process.env.CLAUDE_MAX_TOKENS, '4096'),
   },
   gemini: {
-    apiKey: optionalKey('GEMINI_API_KEY'),
-    model: optional('GEMINI_MODEL', 'gemini-pro'),
+    // Support multiple keys: GEMINI_API_KEYS (comma-separated) or GEMINI_API_KEY (single)
+    apiKey: optionalKey('GEMINI_API_KEYS') || optionalKey('GEMINI_API_KEY'),
+    // Model routing
+    modelShort: optional('GEMINI_MODEL_SHORT', 'gemma-3-27b'),
+    modelMedium: optional('GEMINI_MODEL_MEDIUM', 'gemini-2.5-flash-lite'),
+    modelLong: optional('GEMINI_MODEL_LONG', 'gemini-2.5-flash'),
+    modelVision: optional('GEMINI_MODEL_VISION', 'gemini-1.5-flash'),
     maxTokens: parseInteger('GEMINI_MAX_TOKENS', process.env.GEMINI_MAX_TOKENS, '4096'),
   },
   megallm: {
