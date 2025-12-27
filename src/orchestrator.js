@@ -70,16 +70,24 @@ class MessageOrchestrator {
       logger.info('Message processed successfully');
     } catch (error) {
       logger.error(`Message processing failed: ${error.message}`);
+
+      // Determine user-friendly error message
+      let userMessage = `❌ Sorry, I couldn't process that message.\n\nError: ${error.message}`;
+
+      const isQuotaError = error.message.includes('429') ||
+        error.message.toLowerCase().includes('quota') ||
+        error.message.toLowerCase().includes('rate limit') ||
+        error.message.toLowerCase().includes('insufficient');
+
+      if (isQuotaError) {
+        userMessage = '⚠️ **AI Quota Exhausted**\n\nMaaf, kuota AI sedang habis atau limit tercapai. Sistem akan mencoba merotasi key secara otomatis, tapi jika masalah berlanjut mohon tunggu beberapa saat.';
+      }
+
       try {
         if (statusMessageId) {
-          await this.bot.editStatusMessage(
-            statusMessageId,
-            `❌ Error: ${error.message}`
-          );
+          await this.bot.editStatusMessage(statusMessageId, userMessage);
         } else {
-          await this.bot.sendMessage(
-            `❌ Sorry, I couldn't process that message.\n\nError: ${error.message}`
-          );
+          await this.bot.sendMessage(userMessage);
         }
       } catch (editError) {
         logger.error(`Failed to send error message: ${editError.message}`);

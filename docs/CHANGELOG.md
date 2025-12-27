@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2025-12-27
+
+### Added
+- **API Robustness & Optimization**:
+  - **CLIProxy Integration**: Main LLM provider connected to `fight-cuatro` for centralized API management.
+  - **Smart Model Routing**: Dynamically selects models based on input length:
+    - Short (<100 chars): `gemini-2.5-flash-lite` (Fastest)
+    - Medium (100-500 chars): `gemini-2.5-flash` (Balanced)
+    - Long (>500 chars): `gemini-3-pro-preview` (Best Quality)
+  - **Key Rotation**: Auto-rotates between 5 Gemini API keys on rate limit (429) errors.
+  - **Quota Notification**: User-friendly notification when all API quotas are exhausted.
+- **Provider Redundancy**: Dual-provider setup (CLIProxy primary, Gemini direct fallback).
+
+### Files Added
+- `src/llm/providers/cliproxy-provider.js`
+
+### Files Modified
+- `src/config.js` - Added `cliproxy` credentials and model config.
+- `src/llm/provider-factory.js` - Registered `cliproxy` provider.
+- `src/llm/providers/gemini-provider.js` - Added key rotation and input-based model selection.
+- `src/orchestrator.js` - Added friendly error handling for quota exhaustion.
+
+### Reference
+- Session: 958c62c0-1245-46d2-bd76-0b8fa2f9c79b
+
+---
+
 ## [2.2.0] - 2025-12-27
 
 ### Added

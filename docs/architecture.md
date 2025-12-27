@@ -27,6 +27,8 @@
 - **TTL:** Auto-prunes stale states after 30 minutes.
 
 ### 4. LLM Middleware (`src/llm`)
+- **Smart Model Routing:** Dynamically selects light/heavy models based on task complexity/length.
+- **Provider Proxy:** Uses `CLIProxy` for centralized API management and key rotation.
 - **Task Parser:** Extracts task details (name, due date, project) from natural language.
 - **Prompt Engineering:** specialized prompts for daily planning vs task capture.
 
