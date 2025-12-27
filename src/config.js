@@ -81,11 +81,11 @@ module.exports = {
   gemini: {
     // Support multiple keys: GEMINI_API_KEYS (comma-separated) or GEMINI_API_KEY (single)
     apiKey: optionalKey('GEMINI_API_KEYS') || optionalKey('GEMINI_API_KEY'),
-    // Model routing
-    modelShort: optional('GEMINI_MODEL_SHORT', 'gemma-3-27b'),
-    modelMedium: optional('GEMINI_MODEL_MEDIUM', 'gemini-2.5-flash-lite'),
-    modelLong: optional('GEMINI_MODEL_LONG', 'gemini-2.5-flash'),
-    modelVision: optional('GEMINI_MODEL_VISION', 'gemini-1.5-flash'),
+    // Model routing (using only available models)
+    modelShort: optional('GEMINI_MODEL_SHORT', 'gemini-2.5-flash-lite'),  // Fast, for short inputs
+    modelMedium: optional('GEMINI_MODEL_MEDIUM', 'gemini-2.5-flash-lite'), // Balanced
+    modelLong: optional('GEMINI_MODEL_LONG', 'gemini-2.5-flash'),          // Best quality for long
+    modelVision: optional('GEMINI_MODEL_VISION', 'gemini-2.5-flash'),      // Vision capable
     maxTokens: parseInteger('GEMINI_MAX_TOKENS', process.env.GEMINI_MAX_TOKENS, '4096'),
   },
   megallm: {
