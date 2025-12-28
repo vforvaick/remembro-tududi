@@ -11,3 +11,4 @@ credentials/
 !package.json
 !package-lock.json
 !data/people.json
+!data/projects.json

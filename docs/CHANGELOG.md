@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2025-12-28
+
+### Added
+- **Project Context / Project Intelligence**: Build a knowledge base of projects mentioned in tasks
+  - AI extracts project names from task messages
+  - Unknown projects queued for later description (async, non-blocking)
+  - Natural language descriptions parsed into structured metadata via LLM
+  - Obsidian notes created in `Projects/` folder with YAML frontmatter
+- **`/projects` command**: List known projects with status, task counts, and pending unknowns
+- **`/whatis <name>` command**: Lookup details about a specific project
+
+### Files Added
+- `src/projects/project-service.js` - Core ProjectService with CRUD, pending queue, LLM metadata extraction
+- `src/llm/prompts/parse-project.js` - Prompt for parsing project descriptions
+- `data/projects.json` - JSON storage for projects knowledge base
+- `tests/projects/project-service.test.js` - 21 tests
+
+### Files Modified
+- `src/obsidian/file-manager.js` - Added `createProjectNote()` method
+- `src/orchestrator.js` - Integrated ProjectService for project tracking
+- `src/index.js` - Added ProjectService init, `/projects` and `/whatis` commands
+- `.gitignore` - Allow `data/projects.json` to be tracked
+
+### Reference
+- Session: 63d5141b-6b7c-49b5-8f86-6cfaef9a966b
+
+---
+
 ## [2.3.0] - 2025-12-27
 
 ### Added

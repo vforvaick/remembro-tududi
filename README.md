@@ -28,6 +28,7 @@
 | 🌪️ **Chaos Mode** | `/chaos` shows only urgent & quick tasks when overwhelmed |
 | 📆 **Google Calendar Sync** | `/today` and `/calendar` show events alongside tasks |
 | 👥 **People Context** | Extracts names from tasks & builds a people knowledge base |
+| 📁 **Project Context** | Tracks projects mentioned in tasks with metadata & notes |
 | 💬 **Conversational AI** | Handles greetings, chitchat, and complex stories naturally |
 | 🧵 **Story Parsing** | Extracts multiple tasks from narratives with confirmation flow |
 

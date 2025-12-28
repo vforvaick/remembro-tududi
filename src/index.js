@@ -160,6 +160,15 @@ async function main() {
     });
     logger.info('✅ People service initialized');
 
+    // Initialize project service
+    const ProjectService = require('./projects/project-service');
+    const projectService = new ProjectService({
+      dataPath: 'data/projects.json',
+      llmClient: llmClient,
+      fileManager: fileManager
+    });
+    logger.info('✅ Project service initialized');
+
     // Initialize photo parser for image-to-task extraction
     let photoParser = null;
     if (config.gemini?.apiKey) {
@@ -184,6 +193,7 @@ async function main() {
       articleParser,
       knowledgeSearch,
       peopleService,
+      projectService,
       photoParser
     });
 
@@ -801,6 +811,115 @@ async function main() {
         await bot.sendMessage(message);
       } catch (error) {
         logger.error(`Whois command failed: ${error.message}`);
+        await bot.sendMessage(`❌ Lookup failed: ${error.message}`);
+      }
+    });
+
+    // Projects command - list all known projects
+    bot.onCommand('projects', async (msg) => {
+      try {
+        const projects = projectService.listProjects();
+        const pending = projectService.getPendingProjects();
+        const stats = projectService.getStats();
+
+        let message = '';
+
+        if (projects.length === 0 && pending.length === 0) {
+          await bot.sendMessage(
+            '📁 *No projects in your knowledge base yet*\n\n' +
+            '_When you create tasks with a project (e.g., "submit report for Project Alpha"), ' +
+            'I\'ll track and ask you about them._'
+          );
+          return;
+        }
+
+        if (projects.length > 0) {
+          message += `📁 *${projects.length} Known Project${projects.length > 1 ? 's' : ''}*\n\n`;
+          projects.forEach((p, i) => {
+            const status = p.metadata?.status === 'active' ? '🟢' :
+              p.metadata?.status === 'paused' ? '🟡' :
+                p.metadata?.status === 'completed' ? '✅' : '⚪';
+            const tasks = p.task_count ? ` (${p.task_count} tasks)` : '';
+            const deadline = p.metadata?.deadline ? ` · 📅 ${p.metadata.deadline}` : '';
+            message += `${i + 1}. ${status} *${p.name}*${tasks}${deadline}\n`;
+          });
+        }
+
+        if (pending.length > 0) {
+          message += `\n❓ *${pending.length} Unknown (Pending)*\n`;
+          pending.forEach((p) => {
+            message += `• ${p.name} (mentioned ${p.mentions}x)\n`;
+          });
+          message += `\n_Tell me about them, e.g. "Project Alpha adalah audit tahunan..."_`;
+        }
+
+        if (stats.totalTasks > 0) {
+          message += `\n\n📊 *Stats:* ${stats.active} active, ${stats.totalTasks} total tasks`;
+        }
+
+        await bot.sendMessage(message);
+      } catch (error) {
+        logger.error(`Projects command failed: ${error.message}`);
+        await bot.sendMessage(`❌ Failed to list projects: ${error.message}`);
+      }
+    });
+
+    // Whatis command - lookup a specific project
+    bot.onCommand('whatis', async (msg) => {
+      try {
+        const commandText = msg.text || '/whatis';
+        const name = commandText.replace('/whatis', '').trim();
+
+        if (!name) {
+          await bot.sendMessage('❓ Please provide a project name.\n\n*Example:* /whatis Project Alpha');
+          return;
+        }
+
+        const project = projectService.getProject(name);
+
+        if (!project) {
+          // Check if in pending
+          const pending = projectService.getPendingProjects();
+          const isPending = pending.find(p => p.name.toLowerCase() === name.toLowerCase());
+
+          if (isPending) {
+            await bot.sendMessage(
+              `❓ I don't know *${name}* yet.\n\n` +
+              `_Mentioned ${isPending.mentions}x in:_\n` +
+              `${isPending.contexts?.slice(-3).map(c => `• ${c}`).join('\n') || 'No context'}\n\n` +
+              `_Tell me about it: "${name} adalah..."_`
+            );
+          } else {
+            await bot.sendMessage(`❓ I don't know any project named *${name}*.`);
+          }
+          return;
+        }
+
+        // Format project details
+        const status = project.metadata?.status === 'active' ? '🟢 Active' :
+          project.metadata?.status === 'paused' ? '🟡 Paused' :
+            project.metadata?.status === 'completed' ? '✅ Completed' : '⚪ Unknown';
+
+        let message = `📁 *${project.name}*\n`;
+        if (project.aliases && project.aliases.length > 0) {
+          message += `_Also known as: ${project.aliases.join(', ')}_\n`;
+        }
+        message += `\n${status}\n`;
+
+        if (project.metadata?.category) message += `📂 ${project.metadata.category}\n`;
+        if (project.metadata?.deadline) message += `📅 Deadline: ${project.metadata.deadline}\n`;
+        if (project.metadata?.priority) message += `⚡ Priority: ${project.metadata.priority}\n`;
+        if (project.metadata?.stakeholders?.length) {
+          message += `👥 Stakeholders: ${project.metadata.stakeholders.join(', ')}\n`;
+        }
+        if (project.tags && project.tags.length > 0) message += `🏷️ ${project.tags.join(', ')}\n`;
+        if (project.task_count) message += `📋 ${project.task_count} tasks\n`;
+
+        message += `\n📝 ${project.description || '_No description_'}`;
+
+        await bot.sendMessage(message);
+      } catch (error) {
+        logger.error(`Whatis command failed: ${error.message}`);
         await bot.sendMessage(`❌ Lookup failed: ${error.message}`);
       }
     });

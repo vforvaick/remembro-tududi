@@ -222,6 +222,66 @@ _Tasks mentioning ${person.name} will be linked here._
 
     return filePath;
   }
+
+  /**
+   * Create a project note in Obsidian Projects/ folder
+   * @param {object} project - Project data from ProjectService
+   * @returns {string} Path to created note
+   */
+  async createProjectNote(project) {
+    const projectsPath = path.join(this.vaultPath, 'Projects');
+    const fileName = `${project.id}.md`;
+    const filePath = path.join(projectsPath, fileName);
+
+    // Create Projects directory if needed
+    if (!fs.existsSync(projectsPath)) {
+      fs.mkdirSync(projectsPath, { recursive: true });
+    }
+
+    // Build metadata section
+    const metaLines = [];
+    if (project.metadata) {
+      if (project.metadata.category) metaLines.push(`**Category:** ${project.metadata.category}`);
+      if (project.metadata.status) metaLines.push(`**Status:** ${project.metadata.status}`);
+      if (project.metadata.deadline) metaLines.push(`**Deadline:** ${project.metadata.deadline}`);
+      if (project.metadata.priority) metaLines.push(`**Priority:** ${project.metadata.priority}`);
+      if (project.metadata.stakeholders?.length) {
+        const links = project.metadata.stakeholders.map(s => `[[${s}]]`).join(', ');
+        metaLines.push(`**Stakeholders:** ${links}`);
+      }
+    }
+
+    // Format note content with YAML frontmatter
+    const noteContent = `---
+aliases: [${(project.aliases || []).map(a => `"${a}"`).join(', ')}]
+tags: [${(project.tags || []).join(', ')}]
+status: ${project.metadata?.status || 'active'}
+created: ${project.created_at}
+---
+
+# ${project.name}
+
+${metaLines.join('\n')}
+
+## Description
+
+${project.description || '_No description yet._'}
+
+## Notes
+
+${project.metadata?.notes || '_No additional notes._'}
+
+## Related Tasks
+
+_Tasks in ${project.name} will be linked here._
+
+`;
+
+    fs.writeFileSync(filePath, noteContent);
+    logger.info(`Created project note: ${project.name}`);
+
+    return filePath;
+  }
 }
 
 module.exports = ObsidianFileManager;

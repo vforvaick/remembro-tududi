@@ -9,6 +9,7 @@ class MessageOrchestrator {
     this.bot = dependencies.bot;
     this.knowledgeSearch = dependencies.knowledgeSearch;
     this.peopleService = dependencies.peopleService;
+    this.projectService = dependencies.projectService;
     this.photoParser = dependencies.photoParser;
   }
 
@@ -428,6 +429,26 @@ class MessageOrchestrator {
           }
         } catch (err) {
           logger.warn(`Failed to track person ${personName}: ${err.message}`);
+        }
+      }
+    }
+
+    // Track projects mentioned in tasks (async, non-blocking)
+    if (this.projectService) {
+      for (const taskData of tasks) {
+        if (taskData.project && taskData.project.trim()) {
+          try {
+            const wasQueued = this.projectService.markAsPending(
+              taskData.project,
+              taskData.title
+            );
+            if (!wasQueued) {
+              // Project is known, increment task count
+              this.projectService.incrementTaskCount(taskData.project);
+            }
+          } catch (err) {
+            logger.warn(`Failed to track project ${taskData.project}: ${err.message}`);
+          }
         }
       }
     }
