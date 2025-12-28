@@ -17,6 +17,7 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 ### In Progress
 
 ### Completed Today
+- [x] **Project Context / Intelligence**: `/projects`, `/whatis`, and obsidian note creation for projects ✅
 - [x] **Photo-to-Tasks**: Send photo of whiteboard/notes → Gemini Vision extracts tasks ✅
 - [x] **Conversation State Persistence (Phase 2)**: State persists to JSON file for restart survival ✅
 - [x] **Conversational Flow Enhancement**: Greeting, chitchat, story-based task extraction with confirmation flow ✅
@@ -42,6 +43,7 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 *No outstanding debt.*
 
 ## Recently Completed
+- ✅ **Project Context** (2025-12-28): `/projects` and `/whatis` commands, LLM project metadata extraction.
 - ✅ **Conversational Flow** (2025-12-27): Greeting/chitchat/story types, story→task extraction, sequence grouping.
 - ✅ **People Context** (2025-12-26): `/people` and `/whois` commands, LLM metadata extraction.
 - ✅ **Semantic Search** (2025-12-24): Questions now search knowledge base via orchestrator.

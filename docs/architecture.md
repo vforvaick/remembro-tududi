@@ -49,6 +49,7 @@
 - **Chaos Mode (`src/chaos-mode`):** Task filtering for focus.
 - **Shift Schedule (`src/shift-schedule`):** Fetch work shifts from Google Sheets and sync to Calendar.
 - **People Service (`src/people`):** Contact Intelligence & Knowledge Base.
+- **Project Service (`src/projects`):** Project Intelligence & Metadata Tracking.
 
 ### 7. External Integrations
 - **ElevenLabs:** Speaker diarization for multi-user voice notes.
