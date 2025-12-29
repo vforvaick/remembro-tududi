@@ -4,13 +4,13 @@ const logger = require('../../utils/logger');
 /**
  * CLIProxyAPI Provider
  * OpenAI-compatible API proxy with multiple backend models
- * Deployed at fight-cuatro:8317
+ * Deployed at fight-dos:8317
  */
 class CLIProxyProvider extends BaseLLMProvider {
     constructor(config) {
         super('CLIProxy', config);
 
-        this.baseURL = config.baseURL || 'http://fight-cuatro:8317/v1';
+        this.baseURL = config.baseURL || 'http://fight-dos:8317/v1';
         this.apiKey = config.apiKey || '';
 
         // Model routing configuration

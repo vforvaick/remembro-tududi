@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **API Robustness & Optimization**:
-  - **CLIProxy Integration**: Main LLM provider connected to `fight-cuatro` for centralized API management.
+  - **CLIProxy Integration**: Main LLM provider connected to `fight-dos` for centralized API management.
   - **Smart Model Routing**: Dynamically selects models based on input length:
     - Short (<100 chars): `gemini-2.5-flash-lite` (Fastest)
     - Medium (100-500 chars): `gemini-2.5-flash` (Balanced)
