@@ -42,6 +42,22 @@ class PlanCommand {
       // If no shift manager, use default plan without shift awareness
       if (!this.shiftManager) {
         const allTasks = await this.tududi.getTasks({ completed: false });
+        // Defensive check: ensure allTasks is an array
+        if (!Array.isArray(allTasks)) {
+          logger.warn('getTasks returned non-array, defaulting to empty list');
+          return {
+            date: dateStr,
+            shift: null,
+            plan: {
+              availableTime: { start: '07:00', end: '23:00', totalMinutes: 960 },
+              blockedTime: null,
+              blocks: [],
+              totalEstimated: 0,
+              workloadPercentage: 0
+            },
+            formatted: this._formatPlanMessageDefault(dateStr, [])
+          };
+        }
         const relevantTasks = allTasks.filter(t => !t.due_date || t.due_date <= dateStr);
 
         return {
@@ -66,6 +82,17 @@ class PlanCommand {
 
       // Get all pending tasks
       const allTasks = await this.tududi.getTasks({ completed: false });
+
+      // Defensive check: ensure allTasks is an array
+      if (!Array.isArray(allTasks)) {
+        logger.warn('getTasks returned non-array, using empty task list');
+        return {
+          date: dateStr,
+          shift,
+          plan: this.dailyPlanner.generatePlanWithShift([], shift),
+          formatted: this._formatPlanMessage(dateStr, shift, this.dailyPlanner.generatePlanWithShift([], shift), [])
+        };
+      }
 
       // Filter tasks for this date or earlier
       const relevantTasks = allTasks.filter(t => {

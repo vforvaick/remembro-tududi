@@ -20,7 +20,7 @@ class GeminiProvider extends BaseLLMProvider {
       short: config.modelShort || 'gemma-3-27b',      // < 100 chars, 30 RPM
       medium: config.modelMedium || 'gemini-2.5-flash-lite', // 100-500 chars, 10 RPM
       long: config.modelLong || 'gemini-2.5-flash',   // > 500 chars, 5 RPM
-      vision: config.modelVision || 'gemini-1.5-flash' // Photo parsing
+      vision: config.modelVision || 'gemini-2.0-flash' // Photo parsing (updated for compatibility)
     };
 
     this.maxTokens = config.maxTokens || 4096;
