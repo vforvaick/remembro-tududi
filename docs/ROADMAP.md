@@ -43,6 +43,7 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 *No outstanding debt.*
 
 ## Recently Completed
+- ✅ **System Hardening & Stability** (2026-01-08): Fixed vision model 404s, planning filter crashes, and CLIProxy connectivity.
 - ✅ **Project Context** (2025-12-28): `/projects` and `/whatis` commands, LLM project metadata extraction.
 - ✅ **Conversational Flow** (2025-12-27): Greeting/chitchat/story types, story→task extraction, sequence grouping.
 - ✅ **People Context** (2025-12-26): `/people` and `/whois` commands, LLM metadata extraction.

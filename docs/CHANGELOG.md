@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-01-08
+
+### Fixed
+- **Vision Model 404**: Updated Gemini Vision model to `gemini-2.0-flash` for better compatibility and stability during photo analysis.
+- **Task Planning Crash**: Added defensive array checks in `PlanCommand` to prevent `allTasks.filter is not a function` errors when task data is missing or invalid.
+- **CLIProxy Connectivity**: Corrected `CLIPROXY_BASE_URL` on `fight-uno` production deployment to point to `fight-dos` (161.118.210.22).
+
+### Changed
+- Improved error logging in `PhotoParser` and `PlanCommand`.
+- Standardized Gemini model names in `GeminiProvider`.
+
+### Reference
+- Session: 77c46056-bef3-48af-ae39-597ef1ad4461
+
+---
+
 ## [2.4.0] - 2025-12-28
 
 ### Added
