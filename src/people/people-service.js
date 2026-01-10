@@ -181,6 +181,19 @@ class PeopleService {
     }
 
     /**
+     * Get known people for prompt injection
+     * Returns minimal format: [{id, name, description}]
+     */
+    getKnownPeopleForPrompt() {
+        const data = this._loadData();
+        return data.people.map(p => ({
+            id: p.id,
+            name: p.name,
+            description: p.description?.substring(0, 50) || ''
+        }));
+    }
+
+    /**
      * Get pending (unknown) people to ask about
      * @returns {array} Array of pending names with context
      */

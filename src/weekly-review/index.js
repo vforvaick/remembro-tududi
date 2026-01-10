@@ -9,6 +9,7 @@ const logger = require('../utils/logger');
 class WeeklyReviewService {
     constructor(dependencies) {
         this.tududiClient = dependencies.tududiClient;
+        this.llmClient = dependencies.llmClient || null;
     }
 
     /**
@@ -90,27 +91,61 @@ class WeeklyReviewService {
     }
 
     /**
-     * Generate a full weekly review
-     * @returns {Promise<Object>} Review with tasks and stats
+     * Generate a full weekly review with AI insights
+     * @returns {Promise<Object>} Review with tasks, stats, and AI insight
      */
     async generateReview() {
         const completedTasks = await this.getCompletedTasks(7);
         const stats = this.calculateStats(completedTasks);
 
+        // Generate AI insight if LLM is available
+        let insight = null;
+        if (this.llmClient && stats.total > 0) {
+            try {
+                insight = await this._generateInsight(stats, completedTasks);
+            } catch (err) {
+                logger.warn(`Could not generate AI insight: ${err.message}`);
+            }
+        }
+
         return {
             tasks: completedTasks,
             stats,
-            formatted: this.formatReviewMessage(stats, completedTasks)
+            insight,
+            formatted: this.formatReviewMessage(stats, completedTasks, insight)
         };
+    }
+
+    /**
+     * Generate AI insight from weekly data
+     */
+    async _generateInsight(stats, tasks) {
+        const taskNames = tasks.slice(0, 10).map(t => t.name || t.title).join(', ');
+        const prompt = `Based on this weekly productivity data, give ONE brief insight (max 2 sentences) about patterns or suggestions:
+
+Completed: ${stats.total} tasks
+Best day: ${stats.busiestDay} (${stats.busiestDayCount} tasks)
+By priority: Urgent=${stats.byPriority.urgent}, High=${stats.byPriority.high}, Medium=${stats.byPriority.medium}, Low=${stats.byPriority.low}
+Sample tasks: ${taskNames}
+
+Be specific, actionable, and encouraging. Reply in Indonesian.`;
+
+        const response = await this.llmClient.sendMessage(prompt, {
+            systemPrompt: 'You are a productivity coach. Give brief, actionable insights.',
+            model: 'flash'
+        });
+
+        return response.trim();
     }
 
     /**
      * Format the review as a Telegram message
      * @param {Object} stats - Statistics object
      * @param {Array} tasks - Completed tasks
+     * @param {string} insight - AI-generated insight (optional)
      * @returns {string} Formatted message
      */
-    formatReviewMessage(stats, tasks) {
+    formatReviewMessage(stats, tasks, insight = null) {
         let message = `📊 *Weekly Review*\n\n`;
 
         if (stats.total === 0) {
@@ -142,6 +177,11 @@ class WeeklyReviewService {
             if (tasks.length > 5) {
                 message += `_...and ${tasks.length - 5} more_\n`;
             }
+        }
+
+        // Add AI insight if available
+        if (insight) {
+            message += `\n💡 *Insight:* ${insight}\n`;
         }
 
         message += `\n_Keep up the great work! 🚀_`;

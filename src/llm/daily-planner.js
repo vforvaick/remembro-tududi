@@ -1,10 +1,18 @@
 const logger = require('../utils/logger');
 const { buildPrompt } = require('./prompts/daily-plan');
 
+/**
+ * DailyPlanner with micro-agent loop (Plan-Do-Check pattern)
+ * 
+ * Stage 1 (Plan): Generate initial schedule with LLM
+ * Stage 2 (Do): Check calendar conflicts and constraints
+ * Stage 3 (Check): If issues found, iterate with adjusted constraints
+ */
 class DailyPlanner {
-  constructor(claudeClient, tududiClient) {
-    this.claude = claudeClient;
+  constructor(llmClient, tududiClient, calendarService = null) {
+    this.llm = llmClient;
     this.tududi = tududiClient;
+    this.calendar = calendarService;
 
     // Shift timing definitions
     this.shiftTimings = {
@@ -13,76 +21,199 @@ class DailyPlanner {
       '2_special': { bedtime: '00:00', wakeTime: '07:00' },
       '3': { bedtime: '08:00', wakeTime: '22:00' }
     };
+
+    // Max iterations for plan-do-check loop
+    this.maxIterations = 2;
   }
 
+  /**
+   * Main entry point: Generate plan with micro-agent loop
+   * Plan → Check conflicts → Adjust if needed → Final plan
+   */
   async generatePlan(schedule, options = {}) {
     try {
-      logger.info('Generating daily plan...');
+      logger.info('Starting plan-do-check loop...');
 
       // Fetch incomplete tasks
-      const tasks = await this.tududi.getTasks({
-        completed: false
-      });
+      const tasks = await this.tududi.getTasks({ completed: false });
 
-      if (tasks.length === 0) {
-        return {
-          summary: 'No tasks to plan!',
-          available_time: schedule.available_hours * 60,
-          planned_time: 0,
-          buffer_time: schedule.available_hours * 60,
-          priority_tasks: [],
-          skipped_tasks: []
-        };
+      if (!Array.isArray(tasks) || tasks.length === 0) {
+        return this._emptyPlan(schedule);
       }
 
-      // Build prompt and generate plan
-      const { systemPrompt, userPrompt } = buildPrompt(tasks, schedule);
-      const plan = await this.claude.parseJSON(userPrompt, { systemPrompt });
+      // Get calendar events for today (if calendar is configured)
+      let calendarEvents = [];
+      if (this.calendar?.isConfigured()) {
+        try {
+          calendarEvents = await this.calendar.getTodayEvents();
+          logger.info(`Loaded ${calendarEvents.length} calendar events for planning`);
+        } catch (err) {
+          logger.warn(`Could not load calendar events: ${err.message}`);
+        }
+      }
 
-      logger.info(`Plan generated: ${plan.priority_tasks.length} tasks scheduled`);
+      // === PLAN-DO-CHECK LOOP ===
+      let plan = null;
+      let conflicts = [];
+      let iteration = 0;
 
+      while (iteration < this.maxIterations) {
+        iteration++;
+        logger.info(`Plan iteration ${iteration}/${this.maxIterations}`);
+
+        // PLAN: Generate plan with LLM
+        plan = await this._generatePlanWithLLM(tasks, schedule, calendarEvents, conflicts);
+
+        // DO: Check for conflicts
+        if (this.calendar?.isConfigured() && plan.priority_tasks?.length > 0) {
+          conflicts = await this._checkPlanConflicts(plan, calendarEvents);
+
+          // CHECK: If conflicts found and we can iterate, loop again
+          if (conflicts.length > 0 && iteration < this.maxIterations) {
+            logger.info(`Found ${conflicts.length} conflicts, adjusting plan...`);
+            continue;
+          }
+        }
+
+        // No conflicts or max iterations reached
+        break;
+      }
+
+      // Add conflict warnings to plan
+      if (conflicts.length > 0) {
+        plan.warnings = plan.warnings || [];
+        conflicts.forEach(c => {
+          plan.warnings.push(`⚠️ "${c.taskTitle}" overlaps with "${c.eventTitle}"`);
+        });
+      }
+
+      logger.info(`Plan generated after ${iteration} iteration(s): ${plan.priority_tasks?.length || 0} tasks scheduled`);
       return plan;
+
     } catch (error) {
       logger.error(`Failed to generate plan: ${error.message}`);
       throw error;
     }
   }
 
+  /**
+   * Generate plan using LLM
+   */
+  async _generatePlanWithLLM(tasks, schedule, calendarEvents, previousConflicts) {
+    // Build calendar event summary for prompt
+    const eventSummary = calendarEvents
+      .filter(e => e.start.dateTime)
+      .map(e => {
+        const start = new Date(e.start.dateTime);
+        const end = new Date(e.end.dateTime);
+        return `${start.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}-${end.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}: ${e.summary}`;
+      })
+      .join('\n');
+
+    // Build conflict avoidance instructions
+    let conflictInstructions = '';
+    if (previousConflicts.length > 0) {
+      conflictInstructions = `\nAVOID THESE TIME SLOTS (conflicts detected):\n`;
+      previousConflicts.forEach(c => {
+        conflictInstructions += `- ${c.taskTitle} cannot be at ${c.conflictTime}\n`;
+      });
+    }
+
+    const { systemPrompt, userPrompt } = buildPrompt(tasks, schedule);
+
+    // Inject calendar context into prompt
+    const enhancedUserPrompt = `${userPrompt}
+
+CALENDAR EVENTS TODAY:
+${eventSummary || 'No events scheduled'}
+${conflictInstructions}
+
+IMPORTANT: Do NOT schedule tasks that overlap with calendar events.`;
+
+    const plan = await this.llm.parseJSON(enhancedUserPrompt, {
+      systemPrompt,
+      model: 'pro' // Use pro for better planning
+    });
+
+    return plan;
+  }
+
+  /**
+   * Check plan for conflicts with calendar events
+   */
+  async _checkPlanConflicts(plan, calendarEvents) {
+    const conflicts = [];
+    const today = new Date();
+
+    for (const task of plan.priority_tasks || []) {
+      // Parse time_slot (e.g., "09:00-10:30")
+      if (!task.time_slot) continue;
+
+      const match = task.time_slot.match(/(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/);
+      if (!match) continue;
+
+      const [_, startStr, endStr] = match;
+      const taskStart = this._parseTimeToDate(today, startStr);
+      const taskEnd = this._parseTimeToDate(today, endStr);
+
+      // Check against each calendar event
+      for (const event of calendarEvents) {
+        if (!event.start.dateTime) continue; // Skip all-day events
+
+        const eventStart = new Date(event.start.dateTime);
+        const eventEnd = new Date(event.end.dateTime);
+
+        // Check overlap
+        if (taskStart < eventEnd && taskEnd > eventStart) {
+          conflicts.push({
+            taskTitle: task.title,
+            eventTitle: event.summary,
+            conflictTime: task.time_slot,
+            eventTime: `${eventStart.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}-${eventEnd.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`
+          });
+        }
+      }
+    }
+
+    return conflicts;
+  }
+
+  _parseTimeToDate(baseDate, timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const date = new Date(baseDate);
+    date.setHours(hours, minutes, 0, 0);
+    return date;
+  }
+
+  _emptyPlan(schedule) {
+    return {
+      summary: 'No tasks to plan!',
+      available_time: (schedule?.available_hours || 8) * 60,
+      planned_time: 0,
+      buffer_time: (schedule?.available_hours || 8) * 60,
+      priority_tasks: [],
+      skipped_tasks: []
+    };
+  }
+
   calculateAvailableTime(shift) {
-    // Get shift timing for this shift code
     const timing = this.shiftTimings[shift.code];
     if (!timing) {
       return { start: '07:00', end: '23:00', totalMinutes: 960 };
     }
 
-    // Calculate available time based on shift
     if (shift.code === '1') {
-      // Morning shift: available from end of shift to bedtime
-      const shiftEnd = this._timeToMinutes(shift.timeEnd); // 16:00
-      const bedtime = this._timeToMinutes(timing.bedtime); // 23:00
-      return {
-        start: shift.timeEnd,
-        end: timing.bedtime,
-        totalMinutes: bedtime - shiftEnd
-      };
+      const shiftEnd = this._timeToMinutes(shift.timeEnd);
+      const bedtime = this._timeToMinutes(timing.bedtime);
+      return { start: shift.timeEnd, end: timing.bedtime, totalMinutes: bedtime - shiftEnd };
     } else if (shift.code === '2') {
-      // Evening/night shift: available before shift starts
-      const wakeTime = this._timeToMinutes(timing.wakeTime); // 07:00
-      const shiftStart = this._timeToMinutes(shift.timeStart); // 16:00
-      return {
-        start: timing.wakeTime,
-        end: shift.timeStart,
-        totalMinutes: shiftStart - wakeTime
-      };
+      const wakeTime = this._timeToMinutes(timing.wakeTime);
+      const shiftStart = this._timeToMinutes(shift.timeStart);
+      return { start: timing.wakeTime, end: shift.timeStart, totalMinutes: shiftStart - wakeTime };
     } else if (shift.code === '3') {
-      // Night shift: available from end to bedtime
-      const shiftEnd = this._timeToMinutes(shift.timeEnd); // 07:00
-      const bedtime = this._timeToMinutes(timing.bedtime); // 08:00
-      return {
-        start: shift.timeEnd,
-        end: timing.bedtime,
-        totalMinutes: bedtime - shiftEnd
-      };
+      const shiftEnd = this._timeToMinutes(shift.timeEnd);
+      const bedtime = this._timeToMinutes(timing.bedtime);
+      return { start: shift.timeEnd, end: timing.bedtime, totalMinutes: bedtime - shiftEnd };
     }
 
     return { start: '07:00', end: '23:00', totalMinutes: 960 };
@@ -97,10 +228,7 @@ class DailyPlanner {
 
     return {
       availableTime: available,
-      blockedTime: {
-        start: shift.timeStart,
-        end: shift.timeEnd
-      },
+      blockedTime: { start: shift.timeStart, end: shift.timeEnd },
       blocks,
       totalEstimated,
       workloadPercentage,
@@ -147,7 +275,7 @@ class DailyPlanner {
     message += `${plan.summary}\n\n`;
     message += `⏱️ Available: ${plan.available_time}m | Planned: ${plan.planned_time}m | Buffer: ${plan.buffer_time}m\n\n`;
 
-    if (plan.priority_tasks.length > 0) {
+    if (plan.priority_tasks?.length > 0) {
       message += `**Priority Tasks (${plan.priority_tasks.length}):**\n\n`;
       plan.priority_tasks.forEach((task, i) => {
         message += `${i + 1}. *${task.title}*\n`;
@@ -159,14 +287,14 @@ class DailyPlanner {
       });
     }
 
-    if (plan.skipped_tasks && plan.skipped_tasks.length > 0) {
+    if (plan.skipped_tasks?.length > 0) {
       message += `\n**Skipped (${plan.skipped_tasks.length}):**\n`;
       plan.skipped_tasks.forEach(task => {
         message += `• ${task.title} - ${task.reason}\n`;
       });
     }
 
-    if (plan.warnings && plan.warnings.length > 0) {
+    if (plan.warnings?.length > 0) {
       message += `\n⚠️ **Warnings:**\n`;
       plan.warnings.forEach(warning => {
         message += `• ${warning}\n`;

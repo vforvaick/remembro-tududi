@@ -1,103 +1,58 @@
-const ProviderFactory = require('./provider-factory');
+const CLIProxyProvider = require('./providers/cliproxy-provider');
 const logger = require('../utils/logger');
 
 /**
- * LLM Client with automatic fallback support
- * Tries providers in order until one succeeds
+ * LLM Client - Simplified, CLIProxy-centric
+ * Uses CLIProxy as the sole provider with model aliases (flash/pro)
  */
 class LLMClient {
   constructor(config) {
-    this.providers = ProviderFactory.createProviders(config);
+    const cliproxyConfig = config.cliproxy || config;
+    this.provider = new CLIProxyProvider(cliproxyConfig);
 
-    if (this.providers.length === 0) {
-      throw new Error('No LLM providers configured. Please check your configuration.');
+    if (!this.provider.isConfigured()) {
+      throw new Error('CLIProxy provider is not configured. Check CLIPROXY_API_KEY and CLIPROXY_BASE_URL.');
     }
 
-    logger.info(`LLM Client initialized with ${this.providers.length} provider(s): ${this.providers.map(p => p.name).join(', ')}`);
+    logger.info(`LLM Client initialized with CLIProxy (${this.provider.baseURL})`);
   }
 
   /**
-   * Send a message using fallback strategy
-   * Tries each provider in order until one succeeds
+   * Send a message to the LLM
    * @param {string} userMessage - The message to send
-   * @param {object} options - Options including systemPrompt, maxTokens
+   * @param {object} options - Options including systemPrompt, maxTokens, model
    * @returns {Promise<string>} - The LLM response text
    */
   async sendMessage(userMessage, options = {}) {
-    const errors = [];
-
-    for (const provider of this.providers) {
-      try {
-        logger.info(`Attempting to use ${provider.name} provider`);
-        const response = await provider.sendMessage(userMessage, options);
-        logger.info(`Successfully used ${provider.name} provider`);
-        return response;
-      } catch (error) {
-        logger.warn(`${provider.name} provider failed: ${error.message}`);
-        errors.push({
-          provider: provider.name,
-          error: error.message
-        });
-
-        // Continue to next provider
-        continue;
-      }
-    }
-
-    // All providers failed
-    const errorMessage = `All LLM providers failed:\n${errors.map(e => `- ${e.provider}: ${e.error}`).join('\n')}`;
-    logger.error(errorMessage);
-    throw new Error(errorMessage);
+    return this.provider.sendMessage(userMessage, options);
   }
 
   /**
    * Send a message and parse the response as JSON
-   * Uses fallback strategy across providers
    * @param {string} userMessage - The message to send
-   * @param {object} options - Options including systemPrompt, maxTokens
+   * @param {object} options - Options including systemPrompt, maxTokens, model
    * @returns {Promise<object>} - Parsed JSON object
    */
   async parseJSON(userMessage, options = {}) {
-    const errors = [];
-
-    for (const provider of this.providers) {
-      try {
-        logger.info(`Attempting to use ${provider.name} provider for JSON parsing`);
-        const response = await provider.parseJSON(userMessage, options);
-        logger.info(`Successfully used ${provider.name} provider for JSON parsing`);
-        return response;
-      } catch (error) {
-        logger.warn(`${provider.name} provider failed for JSON parsing: ${error.message}`);
-        errors.push({
-          provider: provider.name,
-          error: error.message
-        });
-
-        // Continue to next provider
-        continue;
-      }
-    }
-
-    // All providers failed
-    const errorMessage = `All LLM providers failed for JSON parsing:\n${errors.map(e => `- ${e.provider}: ${e.error}`).join('\n')}`;
-    logger.error(errorMessage);
-    throw new Error(errorMessage);
+    return this.provider.parseJSON(userMessage, options);
   }
 
   /**
-   * Get the list of configured provider names
-   * @returns {Array<string>}
+   * Send a message with an image (vision)
    */
-  getProviderNames() {
-    return this.providers.map(p => p.name);
+  async sendMessageWithImage(prompt, imageBuffer, mimeType = 'image/jpeg') {
+    return this.provider.sendMessageWithImage(prompt, imageBuffer, mimeType);
   }
 
   /**
-   * Get the primary (first) provider name
-   * @returns {string}
+   * Get provider info
    */
-  getPrimaryProvider() {
-    return this.providers[0]?.name || 'None';
+  getProviderName() {
+    return this.provider.name;
+  }
+
+  getStats() {
+    return this.provider.getStats();
   }
 }
 

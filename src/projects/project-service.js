@@ -181,6 +181,19 @@ class ProjectService {
     }
 
     /**
+     * Get known projects for prompt injection
+     * Returns minimal format: [{id, name, description}]
+     */
+    getKnownProjectsForPrompt() {
+        const data = this._loadData();
+        return data.projects.map(p => ({
+            id: p.id,
+            name: p.name,
+            description: p.description?.substring(0, 50) || ''
+        }));
+    }
+
+    /**
      * Get pending (unknown) projects to ask about
      * @returns {array} Array of pending names with context
      */

@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-01-11
+
+### Added
+- **Plan-Do-Check Loop for `/plan`**: DailyPlanner now iterates up to 2 times, detecting calendar conflicts and adjusting time slots.
+- **Busy-Day Avoidance for `/reschedule`**: Suggestions now check calendar for busy days (3+ events) and shift to less busy alternatives.
+- **AI Insights for `/review`**: WeeklyReviewService generates an LLM-powered insight about productivity patterns.
+
+### Changed
+- `DailyPlanner`: Added calendar integration, conflict detection, and enhanced prompt injection.
+- `ReschedulingService`: Added `getBusyDaysMap()` and updated `suggestReschedule()` with busy-day logic.
+- `WeeklyReviewService`: Added `_generateInsight()` using flash model.
+
+### Reference
+- Session: ad55e43d-f16f-4faa-bbda-fd6f49a468b7
+
+---
+
+## [2.6.0] - 2026-01-08
+
+### Added
+- **Two-Stage LLM Processing**: New intelligence loop with separation of concerns:
+  - **Stage 1 (Extractor)**: Uses `pro` model for strict JSON extraction of intent, tasks, and entities.
+  - **Stage 2 (Companion)**: Uses `flash` model for empathetic, context-aware responses.
+- **Tentative State**: Ambiguous extractions now trigger a confirmation flow before creating tasks.
+- **Entity Injection**: Known people and projects are now injected into prompts for better linking.
+- **Model Aliases**: CLIProxy provider now uses `flash`/`pro`/`vision` aliases for cleaner code.
+
+### Changed
+- **LLM Client Simplified**: Removed multi-provider fallback loop. Now uses CLIProxy exclusively.
+- **CLIProxy Provider Refactored**: Replaced length-based model selection with explicit aliases.
+- **Orchestrator Refactored**: Complete rewrite to use two-stage processing loop.
+
+### Files Added
+- `src/llm/prompts/extractor-prompt.js` - Strict JSON extraction prompt
+- `src/llm/prompts/companion-prompt.js` - Empathetic response generation prompt
+
+### Files Modified
+- `src/llm/llm-client.js` - Simplified to CLIProxy-only
+- `src/llm/providers/cliproxy-provider.js` - Added model aliases and parseJSON
+- `src/orchestrator.js` - Two-stage processing loop
+- `src/state/conversation-state.js` - Added `hasTentative()` method
+- `src/people/people-service.js` - Added `getKnownPeopleForPrompt()`
+- `src/projects/project-service.js` - Added `getKnownProjectsForPrompt()`
+
+### Reference
+- Session: ad55e43d-f16f-4faa-bbda-fd6f49a468b7
+
+---
+
 ## [2.5.0] - 2026-01-08
 
 ### Fixed

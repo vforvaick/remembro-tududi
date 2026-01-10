@@ -10,6 +10,7 @@ class ReschedulingService {
     constructor(dependencies) {
         this.tududiClient = dependencies.tududiClient;
         this.bot = dependencies.bot;
+        this.calendar = dependencies.calendarService || null;
     }
 
     /**
@@ -39,39 +40,57 @@ class ReschedulingService {
 
     /**
      * Suggest a new due date for an overdue task
+     * Enhanced: checks calendar for busy days and shifts suggestions
      * @param {Object} task - The overdue task
+     * @param {Object} busyDays - Map of dates to event counts (optional)
      * @returns {Object} Suggestion with new date and reason
      */
-    suggestReschedule(task) {
+    suggestReschedule(task, busyDays = {}) {
         const today = new Date();
         const priority = (task.priority || 'medium').toLowerCase();
 
-        let daysToAdd;
+        let baseDaysToAdd;
         let reason;
 
         switch (priority) {
             case 'urgent':
             case 'critical':
-                daysToAdd = 0; // Today
+                baseDaysToAdd = 0;
                 reason = 'Urgent priority - reschedule to today';
                 break;
             case 'high':
-                daysToAdd = 1; // Tomorrow
+                baseDaysToAdd = 1;
                 reason = 'High priority - reschedule to tomorrow';
                 break;
             case 'medium':
-                daysToAdd = 3; // 3 days
+                baseDaysToAdd = 3;
                 reason = 'Medium priority - reschedule to 3 days from now';
                 break;
             case 'low':
             default:
-                daysToAdd = 7; // Next week
+                baseDaysToAdd = 7;
                 reason = 'Low priority - reschedule to next week';
                 break;
         }
 
-        const suggestedDate = new Date(today);
-        suggestedDate.setDate(suggestedDate.getDate() + daysToAdd);
+        // Find a date that's not too busy
+        let suggestedDate = new Date(today);
+        suggestedDate.setDate(suggestedDate.getDate() + baseDaysToAdd);
+
+        // Check if suggested date is busy (3+ events = busy)
+        const BUSY_THRESHOLD = 3;
+        let attempts = 0;
+        while (attempts < 5) {
+            const dateStr = suggestedDate.toISOString().split('T')[0];
+            if ((busyDays[dateStr] || 0) >= BUSY_THRESHOLD) {
+                // Date is busy, try next day
+                suggestedDate.setDate(suggestedDate.getDate() + 1);
+                reason = `${priority} priority - shifted to avoid busy day`;
+                attempts++;
+            } else {
+                break;
+            }
+        }
 
         return {
             taskId: task.id,
@@ -81,6 +100,34 @@ class ReschedulingService {
             reason,
             priority
         };
+    }
+
+    /**
+     * Get busy days map from calendar (date -> event count)
+     * @param {number} days - Days to look ahead
+     * @returns {Promise<Object>} Map of date strings to event counts
+     */
+    async getBusyDaysMap(days = 14) {
+        if (!this.calendar?.isConfigured()) {
+            return {};
+        }
+
+        try {
+            const events = await this.calendar.getUpcomingEvents(days);
+            const busyDays = {};
+
+            for (const event of events) {
+                const dateStr = event.start.dateTime
+                    ? new Date(event.start.dateTime).toISOString().split('T')[0]
+                    : event.start.date;
+                busyDays[dateStr] = (busyDays[dateStr] || 0) + 1;
+            }
+
+            return busyDays;
+        } catch (err) {
+            logger.warn(`Could not get busy days: ${err.message}`);
+            return {};
+        }
     }
 
     /**
@@ -105,13 +152,18 @@ class ReschedulingService {
 
     /**
      * Get all overdue tasks with suggestions
+     * Enhanced: uses calendar to avoid busy days
      * @returns {Promise<Array>} Overdue tasks with reschedule suggestions
      */
     async getOverdueWithSuggestions() {
         const overdueTasks = await this.getOverdueTasks();
+
+        // Get busy days map for calendar-aware suggestions
+        const busyDays = await this.getBusyDaysMap(14);
+
         return overdueTasks.map(task => ({
             ...task,
-            suggestion: this.suggestReschedule(task)
+            suggestion: this.suggestReschedule(task, busyDays)
         }));
     }
 

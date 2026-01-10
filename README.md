@@ -36,9 +36,10 @@
 
 | Feature | Description |
 |---------|-------------|
-| 🧠 **Multi-LLM Fallback** | Claude → Gemini → MegaLLM → OpenAI with automatic switching |
+| 🧠 **Two-Stage Processing** | Extractor (strict JSON) + Companion (empathetic voice) loop |
+| 🛡️ **CLIProxy Centric** | Unified gateway with `flash`/`pro`/`vision` model aliases |
 | 🗣️ **Voice Diarization** | ElevenLabs Scribe detects up to 32 speakers |
-| 🇮🇩 **Bilingual Support** | Indonesian + English with natural date parsing ("besok", "lusa", "next Monday") |
+| 🇮🇩 **Bilingual Support** | Indonesian + English with natural date parsing ("besok", "lusa") |
 | 📚 **Knowledge Base** | Auto-categorized notes in Obsidian with semantic search |
 | 🔗 **Bidirectional Sync** | Check tasks in Obsidian ↔ syncs to Tududi automatically |
 

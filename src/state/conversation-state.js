@@ -93,6 +93,7 @@ class ConversationState {
 
     /**
      * Get state for a user
+     * Types: 'story_confirmation', 'tentative', or custom
      */
     get(userId) {
         const state = this.states.get(userId.toString());
@@ -101,6 +102,14 @@ class ConversationState {
             return null;
         }
         return state;
+    }
+
+    /**
+     * Check if user has tentative state (needs confirmation)
+     */
+    hasTentative(userId) {
+        const state = this.get(userId);
+        return state?.type === 'tentative';
     }
 
     /**

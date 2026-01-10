@@ -5,6 +5,11 @@ const logger = require('../../utils/logger');
  * CLIProxyAPI Provider
  * OpenAI-compatible API proxy with multiple backend models
  * Deployed at fight-dos:8317
+ *
+ * Model Strategy:
+ * - 'flash': Fast, cheap, good for empathetic replies (gemini-2.0-flash)
+ * - 'pro': Slower, smarter, for strict JSON extraction (gemini-2.5-pro-preview)
+ * - 'vision': For image analysis
  */
 class CLIProxyProvider extends BaseLLMProvider {
     constructor(config) {
@@ -13,33 +18,37 @@ class CLIProxyProvider extends BaseLLMProvider {
         this.baseURL = config.baseURL || 'http://fight-dos:8317/v1';
         this.apiKey = config.apiKey || '';
 
-        // Model routing configuration
-        this.models = {
-            short: config.modelShort || 'gemini-2.5-flash-lite',
-            medium: config.modelMedium || 'gemini-2.5-flash',
-            long: config.modelLong || 'gemini-3-pro-preview',
-            vision: config.modelVision || 'gemini-3-pro-image-preview'
+        // Model aliases - use these in options.model
+        this.modelAliases = {
+            flash: config.modelFlash || 'gemini-2.0-flash',
+            pro: config.modelPro || 'gemini-2.5-pro-preview',
+            vision: config.modelVision || 'gemini-2.0-flash' // flash supports vision
         };
+
+        // Default model for general use
+        this.defaultModel = config.defaultModel || 'flash';
 
         this.maxRetries = config.maxRetries || 3;
 
         logger.info(`${this.name}: Initialized with base URL ${this.baseURL}`);
-        logger.info(`${this.name}: Models - short:${this.models.short}, medium:${this.models.medium}, long:${this.models.long}, vision:${this.models.vision}`);
+        logger.info(`${this.name}: Models - flash:${this.modelAliases.flash}, pro:${this.modelAliases.pro}, vision:${this.modelAliases.vision}`);
     }
 
     /**
-     * Select model based on input length
+     * Resolve model alias to actual model name
+     * @param {string} modelOrAlias - 'flash', 'pro', or an actual model name
+     * @returns {string} Resolved model name
      */
-    selectModel(inputText) {
-        const charCount = inputText?.length || 0;
-
-        if (charCount < 100) {
-            return this.models.short;
-        } else if (charCount < 500) {
-            return this.models.medium;
-        } else {
-            return this.models.long;
+    resolveModel(modelOrAlias) {
+        if (!modelOrAlias) {
+            return this.modelAliases[this.defaultModel];
         }
+        // Check if it's an alias
+        if (this.modelAliases[modelOrAlias]) {
+            return this.modelAliases[modelOrAlias];
+        }
+        // Otherwise, use as-is (it's a direct model name)
+        return modelOrAlias;
     }
 
     async _makeRequest(endpoint, body, retries = this.maxRetries) {
@@ -58,7 +67,7 @@ class CLIProxyProvider extends BaseLLMProvider {
 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
+                    throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
                 }
 
                 return await response.json();
@@ -84,8 +93,8 @@ class CLIProxyProvider extends BaseLLMProvider {
             throw new Error(`${this.name}: API key not configured`);
         }
 
-        const modelName = options.model || this.selectModel(userMessage);
-        logger.info(`${this.name}: Using model ${modelName}`);
+        const modelName = this.resolveModel(options.model);
+        logger.info(`${this.name}: Using model ${modelName} (alias: ${options.model || this.defaultModel})`);
 
         // Build messages array
         const messages = [];
@@ -110,6 +119,35 @@ class CLIProxyProvider extends BaseLLMProvider {
     }
 
     /**
+     * Send message and parse JSON response
+     * Uses 'pro' model by default for better accuracy
+     */
+    async parseJSON(userMessage, options = {}) {
+        // Default to 'pro' for JSON parsing tasks
+        const modelToUse = options.model || 'pro';
+        const response = await this.sendMessage(userMessage, { ...options, model: modelToUse });
+
+        // Extract JSON from response (handle markdown code blocks)
+        let jsonStr = response.trim();
+        if (jsonStr.startsWith('```json')) {
+            jsonStr = jsonStr.slice(7);
+        } else if (jsonStr.startsWith('```')) {
+            jsonStr = jsonStr.slice(3);
+        }
+        if (jsonStr.endsWith('```')) {
+            jsonStr = jsonStr.slice(0, -3);
+        }
+        jsonStr = jsonStr.trim();
+
+        try {
+            return JSON.parse(jsonStr);
+        } catch (parseError) {
+            logger.error(`Failed to parse JSON response: ${jsonStr.substring(0, 200)}`);
+            throw new Error(`Failed to parse JSON: ${parseError.message}`);
+        }
+    }
+
+    /**
      * Send message with image for vision tasks
      */
     async sendMessageWithImage(prompt, imageBuffer, mimeType = 'image/jpeg') {
@@ -117,7 +155,7 @@ class CLIProxyProvider extends BaseLLMProvider {
             throw new Error(`${this.name}: API key not configured`);
         }
 
-        const modelName = this.models.vision;
+        const modelName = this.modelAliases.vision;
         logger.info(`${this.name}: Vision with ${modelName}`);
 
         const base64Image = imageBuffer.toString('base64');
@@ -157,7 +195,8 @@ class CLIProxyProvider extends BaseLLMProvider {
     getStats() {
         return {
             baseURL: this.baseURL,
-            models: this.models,
+            models: this.modelAliases,
+            defaultModel: this.defaultModel,
             configured: this.isConfigured()
         };
     }

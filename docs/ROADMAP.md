@@ -17,6 +17,9 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 ### In Progress
 
 ### Completed Today
+- [x] **Two-Stage LLM Processing**: Extractor (pro) + Companion (flash) architecture ✅
+- [x] **Tentative State**: Ambiguous extractions trigger confirmation flow ✅
+- [x] **CLIProxy Modernization**: Simplified LLM layer with model aliases ✅
 - [x] **Project Context / Intelligence**: `/projects`, `/whatis`, and obsidian note creation for projects ✅
 - [x] **Photo-to-Tasks**: Send photo of whiteboard/notes → Gemini Vision extracts tasks ✅
 - [x] **Conversation State Persistence (Phase 2)**: State persists to JSON file for restart survival ✅
@@ -37,10 +40,11 @@ To build an AI-Powered ADHD Task Management System that seamlessly integrates me
 - [ ] **People: Relationship graph**: Visualize org hierarchy from people data
 
 ## Known Issues
-*No critical issues at this time.*
+### Non-Critical
+- **Test Leaks**: `telegram-bot.test.js` has worker process issues, likely due to mock teardown leaks.
 
 ## Technical Debt
-*No outstanding debt.*
+- **Integration Test Mocks**: Tests rely heavily on mocking orchestrator's internal state rather than public API.
 
 ## Recently Completed
 - ✅ **System Hardening & Stability** (2026-01-08): Fixed vision model 404s, planning filter crashes, and CLIProxy connectivity.
